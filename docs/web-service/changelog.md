@@ -17,3 +17,8 @@
 - Summary: 识别隐藏逐桩接口并补齐 Web 逐桩状态展示
 - Touchpoints: `web/server/upstream.js`, `web/public/app.js`, `web/public/styles.css`, `README.md`, `docs/web-service/*`
 - Behavior: 通过 `getsublist(rid)` 拉取地点下逐桩状态，页面可展示每一根充电桩当前是否空闲、充电中或故障
+
+- Date: 2026-03-31
+- Summary: 查实充值链路依赖原生 Alipay SDK 并修正 Web 提示
+- Touchpoints: `web/server/upstream.js`, `web/public/app.js`, `README.md`, `docs/web-service/*`
+- Behavior: 经反编译确认原版充值调用 `payV2(...)`，Web 端不再把 App 支付订单误导成可直接付款的网页入口

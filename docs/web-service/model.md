@@ -246,8 +246,9 @@
     "queryUrl": "https://openapi.alipay.com/gateway.do?...",
     "method": "alipay.trade.app.pay",
     "productCode": "QUICK_MSECURITY_PAY",
-    "strategy": "app-order-string",
-    "message": "当前上游返回的是 App 支付签名串。Web 端将改用表单 POST 提交到支付宝网关并在移动端尝试拉起支付宝，但兼容性仍取决于设备、浏览器和支付宝客户端。"
+    "webSupported": false,
+    "strategy": "native-sdk-only",
+    "message": "当前上游返回的是支付宝 App 支付订单串，原版客户端会直接调用 Alipay SDK 的 payV2(...)。这类订单不等于网页收银台订单，浏览器里不能稳定完成支付。"
   }
 }
 ```
@@ -312,6 +313,7 @@
 - `payapply` 若金额小于 1.5，应在服务端提前拒绝
 - 服务端不向浏览器暴露上游 DES 密钥实现细节以外的可变会话状态
 - 支付流程兼容性取决于上游返回的 `orderInfo` 类型；当前默认视为 App 支付签名串
+- 当 `method=alipay.trade.app.pay` 时，Web 端只能展示调试信息和限制说明，不能视为可直接支付
 - 地点状态总览基于 `getlist` + `getsublist(rid)` 组合构建
 - 浏览器扫码优先依赖 `BarcodeDetector`；不支持时保留手动输入作为退化路径
 

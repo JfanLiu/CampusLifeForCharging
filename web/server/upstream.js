@@ -425,6 +425,8 @@ function buildPaymentLaunch(orderInfo) {
   const productCode = String(formFields.product_code || '');
   const gatewayUrl = 'https://openapi.alipay.com/gateway.do';
   const queryUrl = `${gatewayUrl}?${orderInfo}`;
+  const isAppOnly = method === 'alipay.trade.app.pay';
+  const webSupported = !isAppOnly;
 
   return {
     orderInfo,
@@ -433,9 +435,12 @@ function buildPaymentLaunch(orderInfo) {
     queryUrl,
     method,
     productCode,
-    strategy: 'app-order-string',
+    webSupported,
+    strategy: isAppOnly ? 'native-sdk-only' : 'gateway-form',
     message:
-      '当前上游返回的是 App 支付签名串。Web 端将改用表单 POST 提交到支付宝网关并在移动端尝试拉起支付宝，但兼容性仍取决于设备、浏览器和支付宝客户端。',
+      isAppOnly
+        ? '当前上游返回的是支付宝 App 支付订单串，原版客户端会直接调用 Alipay SDK 的 payV2(...)。这类订单不等于网页收银台订单，浏览器里不能稳定完成支付。'
+        : '当前上游返回的是可提交到支付宝网关的订单信息，Web 端将尝试通过表单 POST 发起支付。',
   };
 }
 

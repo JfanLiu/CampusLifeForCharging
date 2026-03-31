@@ -52,7 +52,8 @@ npm start
 
 #### 已知限制
 - 浏览器扫码依赖 `BarcodeDetector`，部分浏览器只能退回手动输入
-- 支付上游目前返回的是 App 支付签名串，Web 端改为提交支付宝网关表单并尝试拉起客户端，但兼容性仍依赖浏览器、设备和支付宝客户端
+- 现有充值接口返回的是 `alipay.trade.app.pay` 类型的 App 支付订单；原版客户端通过 Alipay SDK 完成支付，这类订单无法在纯 Web 中稳定完成付款
+- 若要实现真正的 Web 充值，需要上游改为返回 `alipay.trade.wap.pay` 或其他网页支付链路
 - 逐桩状态依赖隐藏接口 `getsublist(rid)`，页面加载会比仅看地点汇总更慢一些
 
 ### Android

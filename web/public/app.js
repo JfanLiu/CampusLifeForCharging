@@ -370,6 +370,11 @@ function openPaymentLink() {
     return;
   }
 
+  if (launch.webSupported === false) {
+    showToast('当前上游只返回 App 支付订单，Web 端无法直接完成支付。', true);
+    return;
+  }
+
   const isMobile = /iphone|ipad|android|mobile/i.test(navigator.userAgent);
   if (!isMobile && launch.method === 'alipay.trade.app.pay') {
     showToast('当前是支付宝 App 支付单，桌面浏览器拉起成功率较低，建议在手机上继续。', true);
@@ -655,10 +660,14 @@ function renderPayment() {
 
   elements.paymentMessage.textContent =
     `${launch.message || '支付订单已生成。'} 当前 method=${launch.method || '-'}，product_code=${launch.productCode || '-' }。`;
+  elements.paymentOpen.disabled = launch.webSupported === false;
+  elements.paymentOpen.textContent =
+    launch.webSupported === false ? '当前 Web 无法支付' : '前往支付宝';
   elements.paymentUrl.value = prettyJson({
     gatewayUrl: launch.gatewayUrl || '',
     method: launch.method || '',
     productCode: launch.productCode || '',
+    webSupported: launch.webSupported !== false,
     strategy: launch.strategy || '',
     queryUrl: launch.queryUrl || '',
   });
