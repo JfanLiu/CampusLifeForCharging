@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AltCampusLife Web</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Campus Utility Console</p>
+          <h1>AltCampusLife Web</h1>
+          <p class="hero-copy">
+            把原本的移动端充电流程收拢到浏览器里，登录、扫码、充电、充值和记录查询都走同一台服务器。
+          </p>
+        </div>
+        <div class="hero-badges">
+          <span class="badge">Server Proxy</span>
+          <span class="badge">Browser Scanner</span>
+          <span class="badge badge-accent">Alipay Bridge</span>
+        </div>
+      </header>
+
+      <main class="main-grid">
+        <section id="login-view" class="panel auth-panel">
+          <div class="panel-head">
+            <p class="panel-kicker">登录</p>
+            <h2>连接校园账户</h2>
+          </div>
+          <p class="panel-note">
+            使用现有的东晟校园生活账号密码登录。Web 端会通过服务器代理上游接口，不会把加密细节暴露在浏览器里。
+          </p>
+          <form id="login-form" class="form-stack">
+            <label class="field">
+              <span>账号</span>
+              <input id="login-username" name="username" type="text" autocomplete="username" placeholder="手机号 / 账号" required />
+            </label>
+            <label class="field">
+              <span>密码</span>
+              <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="登录密码" required />
+            </label>
+            <button id="login-submit" class="button button-primary" type="submit">登录</button>
+          </form>
+        </section>
+
+        <section id="dashboard-view" class="dashboard hidden">
+          <section class="panel profile-panel">
+            <div class="profile-card">
+              <div class="profile-meta">
+                <p class="panel-kicker">当前会话</p>
+                <h2 id="profile-name">未登录</h2>
+                <p id="profile-phone" class="muted">-</p>
+              </div>
+              <div id="profile-avatar" class="avatar-shell">AC</div>
+            </div>
+          </section>
+
+          <div class="grid-two">
+            <section class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">账户</p>
+                <h2>余额与计费信息</h2>
+              </div>
+              <div id="account-summary" class="definition-list"></div>
+              <div class="toolbar">
+                <button id="refresh-account" class="button button-secondary" type="button">刷新余额</button>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">充电状态</p>
+                <h2>当前设备运行情况</h2>
+              </div>
+              <div id="charge-status-summary" class="definition-list"></div>
+              <div class="toolbar">
+                <button id="refresh-charge-status" class="button button-secondary" type="button">刷新状态</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid-two">
+            <section class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">充电</p>
+                <h2>输入编号或扫码</h2>
+              </div>
+              <form id="charge-form" class="form-stack">
+                <label class="field">
+                  <span>二维码后 8 位</span>
+                  <input id="charge-qrcode" name="qrcode" type="text" inputmode="numeric" placeholder="例如 12345678" required />
+                </label>
+                <div class="toolbar">
+                  <button class="button button-primary" type="submit">开始充电</button>
+                  <button id="scan-trigger" class="button button-secondary" type="button">打开扫码</button>
+                </div>
+              </form>
+              <p class="panel-note">
+                浏览器扫码会尝试优先使用系统原生条码识别。如果当前浏览器不支持，请手动输入编号。
+              </p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">充值</p>
+                <h2>生成支付订单</h2>
+              </div>
+              <form id="pay-form" class="form-stack">
+                <label class="field">
+                  <span>充值金额</span>
+                  <input id="pay-amount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="输入金额" required />
+                </label>
+                <div class="quick-amounts">
+                  <button class="chip" data-amount="1.5" type="button">1.5</button>
+                  <button class="chip" data-amount="3.0" type="button">3.0</button>
+                  <button class="chip" data-amount="6.0" type="button">6.0</button>
+                  <button class="chip" data-amount="15.0" type="button">15.0</button>
+                </div>
+                <div class="toolbar">
+                  <button class="button button-primary" type="submit">生成支付订单</button>
+                </div>
+              </form>
+
+              <div id="payment-launch" class="payment-launch hidden">
+                <p id="payment-message" class="panel-note"></p>
+                <div class="toolbar">
+                  <button id="payment-open" class="button button-primary" type="button">前往支付宝</button>
+                  <button id="payment-refresh" class="button button-secondary" type="button">支付后刷新余额</button>
+                </div>
+                <label class="field">
+                  <span>支付调试信息</span>
+                  <textarea id="payment-url" rows="4" readonly></textarea>
+                </label>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid-two">
+            <section class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">记录</p>
+                <h2>月度充电记录</h2>
+              </div>
+              <form id="records-form" class="record-form">
+                <label class="field compact-field">
+                  <span>年份</span>
+                  <input id="records-yy" type="text" inputmode="numeric" maxlength="4" required />
+                </label>
+                <label class="field compact-field">
+                  <span>月份</span>
+                  <input id="records-mm" type="text" inputmode="numeric" maxlength="2" required />
+                </label>
+                <button class="button button-secondary" type="submit">查询记录</button>
+              </form>
+              <div id="records-list" class="record-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">高级工具</p>
+                <h2>补充接口与原始数据</h2>
+              </div>
+              <div class="toolbar toolbar-wrap">
+                <button id="fetch-price-info" class="button button-secondary" type="button">价格信息</button>
+                <button id="fetch-jacount" class="button button-secondary" type="button">电表信息</button>
+                <button id="fetch-charge-list" class="button button-secondary" type="button">充电列表</button>
+                <button id="fetch-message" class="button button-secondary" type="button">用户消息</button>
+              </div>
+              <div class="advanced-grid">
+                <article class="subpanel">
+                  <h3>价格信息</h3>
+                  <pre id="price-info-raw" class="code-block">尚未加载</pre>
+                </article>
+                <article class="subpanel">
+                  <h3>电表信息</h3>
+                  <pre id="jacount-raw" class="code-block">尚未加载</pre>
+                </article>
+                <article class="subpanel">
+                  <h3>充电列表</h3>
+                  <pre id="charge-list-raw" class="code-block">尚未加载</pre>
+                </article>
+                <article class="subpanel">
+                  <h3>用户消息</h3>
+                  <pre id="message-raw" class="code-block">尚未加载</pre>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel settings-panel">
+            <div class="panel-head">
+              <p class="panel-kicker">设置</p>
+              <h2>仓库与会话</h2>
+            </div>
+            <div class="toolbar toolbar-wrap">
+              <a class="button button-secondary" href="https://github.com/creeper12356/AltCampusLife" target="_blank" rel="noreferrer">源代码仓库</a>
+              <a class="button button-secondary" href="https://shuiyuan.sjtu.edu.cn/t/topic/312357" target="_blank" rel="noreferrer">问题反馈</a>
+              <button id="logout-button" class="button button-danger" type="button">退出登录</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel station-panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">地点总览</p>
+              <h2>所有地点的充电状态</h2>
+            </div>
+            <button id="refresh-stations" class="button button-secondary" type="button">刷新地点状态</button>
+          </div>
+          <p id="station-note" class="panel-note">
+            这里展示的是上游接口当前能提供的地点级汇总：空闲数、充电中数量和异常数量。
+          </p>
+          <div id="station-summary" class="station-summary"></div>
+          <div class="station-toolbar">
+            <label class="field station-search">
+              <span>搜索地点</span>
+              <input id="station-search" type="text" placeholder="输入地点名称关键词" />
+            </label>
+            <div id="station-filters" class="filter-row">
+              <button class="chip chip-active" data-station-filter="all" type="button">全部</button>
+              <button class="chip" data-station-filter="available" type="button">可充电</button>
+              <button class="chip" data-station-filter="busy" type="button">无空闲</button>
+              <button class="chip" data-station-filter="fault" type="button">异常</button>
+            </div>
+          </div>
+          <div id="station-grid" class="station-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="scanner-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <p class="panel-kicker">扫码</p>
+            <h2>对准设备二维码</h2>
+          </div>
+          <button id="scanner-close" class="icon-button" type="button" aria-label="关闭扫码窗口">×</button>
+        </div>
+        <video id="scanner-video" autoplay muted playsinline></video>
+        <p id="scanner-status" class="panel-note">正在尝试打开后置摄像头。</p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
