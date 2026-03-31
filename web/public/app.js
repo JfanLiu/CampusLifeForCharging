@@ -10,6 +10,7 @@ const state = {
   stations: null,
   stationQuery: '',
   stationFilter: 'all',
+  expandedStations: new Set(),
   message: null,
   payment: null,
   scanner: {
@@ -40,6 +41,7 @@ function captureElements() {
     loginUsername: document.getElementById('login-username'),
     loginPassword: document.getElementById('login-password'),
     loginSubmit: document.getElementById('login-submit'),
+    dashboardStats: document.getElementById('dashboard-stats'),
     profileName: document.getElementById('profile-name'),
     profilePhone: document.getElementById('profile-phone'),
     profileAvatar: document.getElementById('profile-avatar'),
@@ -73,6 +75,8 @@ function captureElements() {
     stationSearch: document.getElementById('station-search'),
     stationGrid: document.getElementById('station-grid'),
     refreshStations: document.getElementById('refresh-stations'),
+    expandStations: document.getElementById('expand-stations'),
+    collapseStations: document.getElementById('collapse-stations'),
     messageRaw: document.getElementById('message-raw'),
     logoutButton: document.getElementById('logout-button'),
     scannerModal: document.getElementById('scanner-modal'),
@@ -98,10 +102,13 @@ function bindEvents() {
   elements.fetchChargeList.addEventListener('click', () => loadChargeList(true));
   elements.fetchMessage.addEventListener('click', () => loadMessage(true));
   elements.refreshStations.addEventListener('click', () => loadStations(true));
+  elements.expandStations.addEventListener('click', expandAllStations);
+  elements.collapseStations.addEventListener('click', collapseAllStations);
   elements.stationSearch.addEventListener('input', (event) => {
     state.stationQuery = event.target.value.trim().toLowerCase();
     renderStations();
   });
+  elements.stationGrid.addEventListener('click', handleStationGridClick);
   elements.logoutButton.addEventListener('click', handleLogout);
   elements.scannerClose.addEventListener('click', closeScanner);
   elements.scannerModal.addEventListener('click', (event) => {
@@ -119,12 +126,7 @@ function bindEvents() {
   document.querySelectorAll('[data-station-filter]').forEach((button) => {
     button.addEventListener('click', () => {
       state.stationFilter = button.getAttribute('data-station-filter') || 'all';
-      document.querySelectorAll('[data-station-filter]').forEach((item) => {
-        item.classList.toggle(
-          'chip-active',
-          item.getAttribute('data-station-filter') === state.stationFilter,
-        );
-      });
+      syncStationFilterButtons();
       renderStations();
     });
   });
@@ -139,6 +141,7 @@ function bindEvents() {
 async function initializeApp() {
   elements.recordsYear.value = state.recordMonth.yy;
   elements.recordsMonth.value = state.recordMonth.mm;
+  syncStationFilterButtons();
   await handlePaymentReturnFromUrl();
   await restoreSession();
   if (!state.stations) {
@@ -228,6 +231,7 @@ async function loadAccount(withToast = false) {
   try {
     state.account = await api('/api/account');
     renderAccount();
+    renderDashboardStats();
     if (withToast) {
       showToast('余额已刷新');
     }
@@ -240,6 +244,7 @@ async function loadChargeStatus(withToast = false) {
   try {
     state.chargeStatus = await api('/api/charge-status');
     renderChargeStatus();
+    renderDashboardStats();
     if (withToast) {
       showToast('充电状态已刷新');
     }
@@ -300,6 +305,7 @@ async function loadStations(withToast = false) {
   try {
     state.stations = await api('/api/stations');
     renderStations();
+    renderDashboardStats();
     if (withToast) {
       showToast('地点状态已刷新');
     }
@@ -402,6 +408,7 @@ async function handleRecordsSubmit(event) {
     );
     state.recordMonth = { yy, mm };
     renderRecords();
+    renderDashboardStats();
     showToast('记录已刷新');
   } catch (error) {
     showToast(error.message || '记录查询失败', true);
@@ -540,6 +547,47 @@ function closeScanner() {
   elements.scannerModal.classList.add('hidden');
 }
 
+function handleStationGridClick(event) {
+  const toggle = event.target.closest('[data-station-toggle]');
+  if (!toggle) {
+    return;
+  }
+
+  const stationId = toggle.getAttribute('data-station-toggle');
+  if (!stationId) {
+    return;
+  }
+
+  if (state.expandedStations.has(stationId)) {
+    state.expandedStations.delete(stationId);
+  } else {
+    state.expandedStations.add(stationId);
+  }
+  renderStations();
+}
+
+function expandAllStations() {
+  const ids = (state.stations?.locations || [])
+    .map((item) => buildStationKey(item))
+    .filter(Boolean);
+  state.expandedStations = new Set(ids);
+  renderStations();
+}
+
+function collapseAllStations() {
+  state.expandedStations.clear();
+  renderStations();
+}
+
+function syncStationFilterButtons() {
+  document.querySelectorAll('[data-station-filter]').forEach((item) => {
+    item.classList.toggle(
+      'chip-active',
+      item.getAttribute('data-station-filter') === state.stationFilter,
+    );
+  });
+}
+
 function render() {
   const loggedIn = Boolean(state.session);
   elements.loginView.classList.toggle('hidden', loggedIn);
@@ -552,6 +600,7 @@ function render() {
   }
 
   renderProfile();
+  renderDashboardStats();
   renderAccount();
   renderChargeStatus();
   renderRecords();
@@ -577,6 +626,57 @@ function renderProfile() {
   } else {
     elements.profileAvatar.textContent = buildInitials(profile.username);
   }
+}
+
+function renderDashboardStats() {
+  if (!elements.dashboardStats) {
+    return;
+  }
+
+  elements.dashboardStats.innerHTML = '';
+  if (!state.session) {
+    return;
+  }
+
+  const chargeSummary = summarizeChargeStatus(state.chargeStatus);
+  const totalLocations = Number(state.stations?.totals?.locationCount || 0);
+  const freePiles = Number(state.stations?.totals?.freeCount || 0);
+  const availableLocations = (state.stations?.locations || []).filter(
+    (item) => Number(item.freeCount || 0) > 0,
+  ).length;
+  const stats = [
+    {
+      label: '账户余额',
+      value: state.account?.acbalance || '-',
+      caption: state.account?.jacountroom || state.account?.jacountname || '校园账户已连接',
+    },
+    {
+      label: '当前充电',
+      value: chargeSummary.value,
+      caption: chargeSummary.caption,
+    },
+    {
+      label: '本月记录',
+      value: String(Array.isArray(state.records) ? state.records.length : 0),
+      caption: `${state.recordMonth.yy}-${state.recordMonth.mm}`,
+    },
+    {
+      label: '可用地点',
+      value: totalLocations ? `${availableLocations}/${totalLocations}` : '-',
+      caption: totalLocations ? `空闲桩 ${freePiles} 根` : '地点状态尚未加载',
+    },
+  ];
+
+  stats.forEach((item) => {
+    const card = document.createElement('article');
+    card.className = 'snapshot-card';
+    card.innerHTML = `
+      <div class="snapshot-label">${escapeHtml(item.label)}</div>
+      <div class="snapshot-value">${escapeHtml(item.value)}</div>
+      <div class="snapshot-caption">${escapeHtml(item.caption)}</div>
+    `;
+    elements.dashboardStats.appendChild(card);
+  });
 }
 
 function renderAccount() {
@@ -683,15 +783,20 @@ function renderStations() {
     return;
   }
 
-  elements.stationNote.textContent = overview.note || '上游接口未提供额外说明。';
+  elements.stationNote.textContent = overview.note
+    ? `${overview.note} 逐桩列表默认折叠，方便手机上快速浏览。`
+    : '逐桩列表默认折叠，方便手机上快速浏览。';
 
   const totals = overview.totals || {};
+  const locations = Array.isArray(overview.locations) ? overview.locations : [];
+  const availableLocations = locations.filter((item) => Number(item.freeCount || 0) > 0).length;
   const statRows = [
     ['地点数', totals.locationCount ?? 0],
+    ['可用地点', availableLocations],
     ['充电桩总数', totals.totalCount ?? 0],
-    ['可用空闲数', totals.freeCount ?? 0],
-    ['充电中数量', totals.chargingCount ?? 0],
-    ['异常数量', totals.errorCount ?? 0],
+    ['空闲桩', totals.freeCount ?? 0],
+    ['充电中', totals.chargingCount ?? 0],
+    ['异常桩', totals.errorCount ?? 0],
   ];
 
   statRows.forEach(([label, value]) => {
@@ -704,30 +809,35 @@ function renderStations() {
     elements.stationSummary.appendChild(card);
   });
 
-  const filtered = (overview.locations || []).filter((item) => {
-    const matchesQuery =
-      !state.stationQuery ||
-      item.rname.toLowerCase().includes(state.stationQuery) ||
-      (item.piles || []).some((pile) => pile.name.toLowerCase().includes(state.stationQuery));
+  const filtered = locations
+    .filter((item) => {
+      const piles = Array.isArray(item.piles) ? item.piles : [];
+      const matchesQuery =
+        !state.stationQuery ||
+        String(item.rname || '').toLowerCase().includes(state.stationQuery) ||
+        piles.some((pile) =>
+          String(pile.name || '').toLowerCase().includes(state.stationQuery),
+        );
 
-    if (!matchesQuery) {
-      return false;
-    }
+      if (!matchesQuery) {
+        return false;
+      }
 
-    if (state.stationFilter === 'all') {
+      if (state.stationFilter === 'all') {
+        return true;
+      }
+      if (state.stationFilter === 'available') {
+        return item.statusCode === 'available';
+      }
+      if (state.stationFilter === 'busy') {
+        return item.statusCode === 'busy' || item.statusCode === 'mixed';
+      }
+      if (state.stationFilter === 'fault') {
+        return item.statusCode === 'fault';
+      }
       return true;
-    }
-    if (state.stationFilter === 'available') {
-      return item.statusCode === 'available';
-    }
-    if (state.stationFilter === 'busy') {
-      return item.statusCode === 'busy' || item.statusCode === 'mixed';
-    }
-    if (state.stationFilter === 'fault') {
-      return item.statusCode === 'fault';
-    }
-    return true;
-  });
+    })
+    .sort(compareStations);
 
   if (filtered.length === 0) {
     const empty = document.createElement('article');
@@ -738,24 +848,40 @@ function renderStations() {
   }
 
   filtered.forEach((item) => {
-    const card = document.createElement('article');
-    card.className = `station-card status-${item.statusCode || 'unknown'}`;
+    const stationId = buildStationKey(item);
     const piles = Array.isArray(item.piles) ? item.piles : [];
+    const expanded = state.expandedStations.has(stationId);
+    const visiblePiles = expanded ? piles : piles.slice(0, 6);
     const pileMarkup = piles.length
       ? `
         <div class="station-piles">
-          ${piles
+          ${visiblePiles
             .map(
               (pile) => `
                 <div class="pile-item status-${pile.statusCode || 'unknown'}">
                   <div class="pile-name">${escapeHtml(pile.name || '未命名充电桩')}</div>
-                  <div class="pile-status">${escapeHtml(pile.statusLabel || pile.status || '状态未知')}</div>
+                  <div class="pile-status">${escapeHtml(
+                    pile.statusLabel || pile.status || '状态未知',
+                  )}</div>
                 </div>`,
             )
             .join('')}
         </div>
       `
       : '<div class="empty-card">当前地点没有拿到逐桩数据。</div>';
+    const previewText = piles.length
+      ? expanded
+        ? `已展开 ${piles.length} 根`
+        : `预览 ${visiblePiles.length} / ${piles.length} 根`
+      : '暂无逐桩数据';
+    const toggleMarkup =
+      piles.length > 6
+        ? `<button class="button button-secondary button-small" data-station-toggle="${escapeHtml(
+            stationId,
+          )}" type="button">${expanded ? '收起逐桩' : `展开全部 ${piles.length} 根`}</button>`
+        : '';
+    const card = document.createElement('article');
+    card.className = `station-card status-${item.statusCode || 'unknown'}`;
     card.innerHTML = `
       <div class="station-card-header">
         <div>
@@ -764,28 +890,19 @@ function renderStations() {
         </div>
         <span class="status-pill status-${item.statusCode || 'unknown'}">${escapeHtml(item.statusLabel || '状态未知')}</span>
       </div>
-      <div class="definition-list">
-        <div class="definition-row">
-          <div class="definition-term">空闲</div>
-          <div class="definition-value">${escapeHtml(String(item.freeCount ?? 0))}</div>
-        </div>
-        <div class="definition-row">
-          <div class="definition-term">充电中</div>
-          <div class="definition-value">${escapeHtml(String(item.chargingCount ?? 0))}</div>
-        </div>
-        <div class="definition-row">
-          <div class="definition-term">异常</div>
-          <div class="definition-value">${escapeHtml(String(item.errorCount ?? 0))}</div>
-        </div>
-        <div class="definition-row">
-          <div class="definition-term">总计</div>
-          <div class="definition-value">${escapeHtml(String(item.totalCount ?? 0))}</div>
-        </div>
+      <div class="station-meta">
+        <span class="meta-pill">空闲 ${escapeHtml(String(item.freeCount ?? 0))}</span>
+        <span class="meta-pill">充电中 ${escapeHtml(String(item.chargingCount ?? 0))}</span>
+        <span class="meta-pill">异常 ${escapeHtml(String(item.errorCount ?? 0))}</span>
+        <span class="meta-pill">总计 ${escapeHtml(String(item.totalCount ?? 0))}</span>
       </div>
       <div class="pile-section">
         <div class="pile-section-head">
-          <span class="muted">逐桩状态</span>
-          <span class="muted">${escapeHtml(String(piles.length))} 根</span>
+          <div>
+            <div class="muted">逐桩状态</div>
+            <div class="pile-preview-note">${escapeHtml(previewText)}</div>
+          </div>
+          ${toggleMarkup}
         </div>
         ${pileMarkup}
       </div>
@@ -829,6 +946,59 @@ function buildRecordRow(key, value) {
   row.appendChild(keyElement);
   row.appendChild(valueElement);
   return row;
+}
+
+function summarizeChargeStatus(status) {
+  if (!status || !Object.keys(status).length) {
+    return {
+      value: '未充电',
+      caption: '当前暂无充电记录',
+    };
+  }
+
+  return {
+    value: status.chargestatus || '进行中',
+    caption: status.position || status.bgtime || '设备状态已更新',
+  };
+}
+
+function compareStations(left, right) {
+  const leftRank = getStationRank(left);
+  const rightRank = getStationRank(right);
+  if (leftRank !== rightRank) {
+    return leftRank - rightRank;
+  }
+
+  const freeGap = Number(right.freeCount || 0) - Number(left.freeCount || 0);
+  if (freeGap !== 0) {
+    return freeGap;
+  }
+
+  const totalGap = Number(right.totalCount || 0) - Number(left.totalCount || 0);
+  if (totalGap !== 0) {
+    return totalGap;
+  }
+
+  return String(left.rname || '').localeCompare(String(right.rname || ''), 'zh-CN');
+}
+
+function getStationRank(item) {
+  switch (item.statusCode) {
+    case 'available':
+      return 0;
+    case 'mixed':
+      return 1;
+    case 'busy':
+      return 2;
+    case 'fault':
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+function buildStationKey(item) {
+  return String(item?.rid || item?.rname || '');
 }
 
 function buildInitials(name) {
@@ -886,10 +1056,8 @@ function submitPaymentForm(action, fields, target) {
 function showToast(message, isError = false) {
   clearTimeout(toastTimer);
   elements.toast.textContent = message;
+  elements.toast.dataset.tone = isError ? 'error' : 'success';
   elements.toast.classList.remove('hidden');
-  elements.toast.style.background = isError
-    ? 'rgba(125, 26, 26, 0.92)'
-    : 'rgba(19, 38, 28, 0.92)';
   toastTimer = window.setTimeout(() => {
     elements.toast.classList.add('hidden');
   }, 2800);
