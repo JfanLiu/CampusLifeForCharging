@@ -115,7 +115,46 @@ function toNumber(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function normalizeStationSummary(item) {
+function normalizePileStatus(statusText) {
+  const normalized = String(statusText || '').trim();
+
+  if (normalized === '空闲') {
+    return { statusCode: 'available', statusLabel: '空闲' };
+  }
+  if (normalized === '充电中') {
+    return { statusCode: 'busy', statusLabel: '充电中' };
+  }
+  if (normalized === '故障') {
+    return { statusCode: 'fault', statusLabel: '故障' };
+  }
+
+  return {
+    statusCode: 'unknown',
+    statusLabel: normalized || '状态未知',
+  };
+}
+
+function comparePileName(left, right) {
+  return String(left?.name || '').localeCompare(String(right?.name || ''), 'zh-CN', {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
+function normalizeStationPile(item) {
+  const { statusCode, statusLabel } = normalizePileStatus(item?.rcusable);
+
+  return {
+    name: String(item?.rcname || ''),
+    status: String(item?.rcusable || ''),
+    note: String(item?.rcnote || ''),
+    statusCode,
+    statusLabel,
+    raw: item,
+  };
+}
+
+function normalizeStationSummary(item, piles = []) {
   const chargingCount = toNumber(item?.chargingnums);
   const freeCount = toNumber(item?.freenums);
   const errorCount = toNumber(item?.errnums);
@@ -148,12 +187,15 @@ function normalizeStationSummary(item) {
     hasFree: freeCount > 0,
     statusCode,
     statusLabel,
+    piles,
     raw: item,
   };
 }
 
-function buildStationOverview(rawList) {
-  const locations = (Array.isArray(rawList) ? rawList : []).map(normalizeStationSummary);
+function buildStationOverview(rawList, pileMap = {}) {
+  const locations = (Array.isArray(rawList) ? rawList : []).map((item) =>
+    normalizeStationSummary(item, pileMap[String(item?.rid || '')] || []),
+  );
   const totals = locations.reduce(
     (accumulator, item) => {
       accumulator.locationCount += 1;
@@ -173,11 +215,29 @@ function buildStationOverview(rawList) {
   );
 
   return {
-    granularity: 'location-summary',
-    note: '上游接口当前提供的是地点级汇总计数，不包含单根充电桩编号与明细状态。',
+    granularity: 'pile-detail',
+    note: '当前页面通过 getlist 获取地点汇总，再通过 getsublist(rid) 获取该地点下每一根充电桩的状态。',
     locations,
     totals,
   };
+}
+
+async function mapWithConcurrency(items, concurrency, mapper) {
+  const values = Array.isArray(items) ? items : [];
+  const maxConcurrency = Math.max(1, Math.min(concurrency, values.length || 1));
+  const results = new Array(values.length);
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < values.length) {
+      const currentIndex = cursor;
+      cursor += 1;
+      results[currentIndex] = await mapper(values[currentIndex], currentIndex);
+    }
+  }
+
+  await Promise.all(Array.from({ length: maxConcurrency }, () => worker()));
+  return results;
 }
 
 function normalizeBalanceNumber(accountInfo) {
@@ -297,8 +357,26 @@ async function getChargeList() {
   return response?.data?.result1 ?? [];
 }
 
+async function getStationSublist(rid) {
+  const response = await postOrder(CHARGE_URL, {
+    ordertype: 'getsublist',
+    origin: 'cloud',
+    rid: Number(rid),
+  });
+
+  return (response?.data?.result1 ?? [])
+    .map(normalizeStationPile)
+    .sort(comparePileName);
+}
+
 async function getStationOverview() {
-  return buildStationOverview(await getChargeList());
+  const stations = await getChargeList();
+  const pileEntries = await mapWithConcurrency(stations, 5, async (station) => [
+    String(station?.rid || ''),
+    await getStationSublist(station?.rid).catch(() => []),
+  ]);
+
+  return buildStationOverview(stations, Object.fromEntries(pileEntries));
 }
 
 async function getPriceInfo(userId) {
@@ -404,6 +482,7 @@ module.exports = {
   getMessage,
   getChargeStatus,
   getChargeList,
+  getStationSublist,
   getStationOverview,
   getPriceInfo,
   getChargeRecords,

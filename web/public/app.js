@@ -140,7 +140,10 @@ async function initializeApp() {
   elements.recordsYear.value = state.recordMonth.yy;
   elements.recordsMonth.value = state.recordMonth.mm;
   await handlePaymentReturnFromUrl();
-  await Promise.all([loadStations(false), restoreSession()]);
+  await restoreSession();
+  if (!state.stations) {
+    await loadStations(false);
+  }
 }
 
 async function restoreSession() {
@@ -676,6 +679,7 @@ function renderStations() {
   const totals = overview.totals || {};
   const statRows = [
     ['地点数', totals.locationCount ?? 0],
+    ['充电桩总数', totals.totalCount ?? 0],
     ['可用空闲数', totals.freeCount ?? 0],
     ['充电中数量', totals.chargingCount ?? 0],
     ['异常数量', totals.errorCount ?? 0],
@@ -693,7 +697,9 @@ function renderStations() {
 
   const filtered = (overview.locations || []).filter((item) => {
     const matchesQuery =
-      !state.stationQuery || item.rname.toLowerCase().includes(state.stationQuery);
+      !state.stationQuery ||
+      item.rname.toLowerCase().includes(state.stationQuery) ||
+      (item.piles || []).some((pile) => pile.name.toLowerCase().includes(state.stationQuery));
 
     if (!matchesQuery) {
       return false;
@@ -725,6 +731,22 @@ function renderStations() {
   filtered.forEach((item) => {
     const card = document.createElement('article');
     card.className = `station-card status-${item.statusCode || 'unknown'}`;
+    const piles = Array.isArray(item.piles) ? item.piles : [];
+    const pileMarkup = piles.length
+      ? `
+        <div class="station-piles">
+          ${piles
+            .map(
+              (pile) => `
+                <div class="pile-item status-${pile.statusCode || 'unknown'}">
+                  <div class="pile-name">${escapeHtml(pile.name || '未命名充电桩')}</div>
+                  <div class="pile-status">${escapeHtml(pile.statusLabel || pile.status || '状态未知')}</div>
+                </div>`,
+            )
+            .join('')}
+        </div>
+      `
+      : '<div class="empty-card">当前地点没有拿到逐桩数据。</div>';
     card.innerHTML = `
       <div class="station-card-header">
         <div>
@@ -750,6 +772,13 @@ function renderStations() {
           <div class="definition-term">总计</div>
           <div class="definition-value">${escapeHtml(String(item.totalCount ?? 0))}</div>
         </div>
+      </div>
+      <div class="pile-section">
+        <div class="pile-section-head">
+          <span class="muted">逐桩状态</span>
+          <span class="muted">${escapeHtml(String(piles.length))} 根</span>
+        </div>
+        ${pileMarkup}
       </div>
     `;
     elements.stationGrid.appendChild(card);

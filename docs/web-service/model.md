@@ -94,8 +94,8 @@
   "priceInfo": {},
   "records": [],
   "stations": {
-    "granularity": "location-summary",
-    "note": "上游接口当前提供的是地点级汇总计数，不包含单根充电桩编号与明细状态。",
+    "granularity": "pile-detail",
+    "note": "当前页面通过 getlist 获取地点汇总，再通过 getsublist(rid) 获取该地点下每一根充电桩的状态。",
     "locations": [],
     "totals": {
       "locationCount": 20,
@@ -170,14 +170,14 @@
 
 ### `GET /api/stations`
 
-读取地点状态总览。
+读取地点状态总览和逐桩状态。
 
 示例响应：
 
 ```json
 {
-  "granularity": "location-summary",
-  "note": "上游接口当前提供的是地点级汇总计数，不包含单根充电桩编号与明细状态。",
+  "granularity": "pile-detail",
+  "note": "当前页面通过 getlist 获取地点汇总，再通过 getsublist(rid) 获取该地点下每一根充电桩的状态。",
   "locations": [
     {
       "rid": "359",
@@ -188,7 +188,16 @@
       "totalCount": 12,
       "hasFree": true,
       "statusCode": "available",
-      "statusLabel": "有空闲，可充电"
+      "statusLabel": "有空闲，可充电",
+      "piles": [
+        {
+          "name": "材料D楼-01左#",
+          "status": "空闲",
+          "note": "空闲",
+          "statusCode": "available",
+          "statusLabel": "空闲"
+        }
+      ]
     }
   ],
   "totals": {
@@ -303,7 +312,7 @@
 - `payapply` 若金额小于 1.5，应在服务端提前拒绝
 - 服务端不向浏览器暴露上游 DES 密钥实现细节以外的可变会话状态
 - 支付流程兼容性取决于上游返回的 `orderInfo` 类型；当前默认视为 App 支付签名串
-- 地点状态总览基于 `getlist` 返回值构建，当前粒度固定为地点级而非单桩级
+- 地点状态总览基于 `getlist` + `getsublist(rid)` 组合构建
 - 浏览器扫码优先依赖 `BarcodeDetector`；不支持时保留手动输入作为退化路径
 
 ## Compatibility Notes

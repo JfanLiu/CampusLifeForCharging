@@ -374,7 +374,7 @@ body {
 
 .station-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -473,6 +473,60 @@ body {
   justify-content: space-between;
   gap: 10px;
   align-items: start;
+}
+
+.pile-section {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.pile-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.station-piles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 8px;
+}
+
+.pile-item {
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(19, 38, 28, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.pile-item.status-available {
+  background: rgba(15, 124, 118, 0.08);
+  border-color: rgba(15, 124, 118, 0.18);
+}
+
+.pile-item.status-busy {
+  background: rgba(217, 106, 43, 0.08);
+  border-color: rgba(217, 106, 43, 0.18);
+}
+
+.pile-item.status-fault {
+  background: rgba(125, 26, 26, 0.08);
+  border-color: rgba(125, 26, 26, 0.18);
+}
+
+.pile-name {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.pile-status {
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 .status-pill {
