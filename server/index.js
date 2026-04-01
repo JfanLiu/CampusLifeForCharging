@@ -5,7 +5,6 @@ const {
   APP_NAME,
   HOST,
   PORT,
-  PUBLIC_DIR,
   SESSION_COOKIE,
 } = require('./config');
 const {
@@ -23,7 +22,7 @@ const {
   buildClearSessionCookie,
 } = require('./sessionStore');
 
-const publicRoot = path.resolve(__dirname, '..', PUBLIC_DIR);
+const publicRoot = path.resolve(__dirname, '..', 'dist');
 const sessionStore = new SessionStore();
 
 const mimeTypes = {

@@ -12,7 +12,6 @@ module.exports = {
   APP_NAME: process.env.APP_NAME || 'CampusLifeForCharging Web',
   HOST: process.env.HOST || '127.0.0.1',
   PORT: readNumber('PORT', 8787),
-  PUBLIC_DIR: process.env.PUBLIC_DIR || 'dist',
   LOGIN_URL:
     process.env.LOGIN_URL || 'http://kld.sjtu.edu.cn:80/campuslife/WebService.asmx/UserService',
   PREFIX: UPSTREAM_BASE,
