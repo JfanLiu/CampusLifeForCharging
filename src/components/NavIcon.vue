@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'login' | 'overview' | 'charge' | 'records' | 'stations' | 'more';
+  name: 'home' | 'login' | 'overview' | 'refresh' | 'charge' | 'records' | 'stations' | 'more';
 }>();
 </script>
 
@@ -31,6 +31,17 @@ defineProps<{
       d="M4 5h7v6H4zM13 5h7v10h-7zM4 13h7v6H4zM13 17h7v2h-7z"
       fill="none"
       stroke="currentColor"
+      stroke-linejoin="round"
+      stroke-width="1.8"
+    />
+  </svg>
+
+  <svg v-else-if="name === 'refresh'" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
       stroke-linejoin="round"
       stroke-width="1.8"
     />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import NavIcon from './NavIcon.vue';
 import type { DashboardStat, UserProfile } from '../types';
 
 const props = defineProps<{
@@ -84,7 +85,9 @@ watch(
 
     <div class="overview-quick-grid">
       <button class="overview-quick-action" type="button" @click="emit('refresh')" :disabled="refreshBusy">
-        <span class="overview-quick-icon" aria-hidden="true">RF</span>
+        <span class="overview-quick-icon" aria-hidden="true">
+          <NavIcon name="refresh" />
+        </span>
         <span class="overview-quick-copy">
           <strong>{{ refreshBusy ? '更新中...' : '刷新总览' }}</strong>
           <span>余额、状态和地点一起刷新</span>
@@ -95,7 +98,9 @@ watch(
         type="button"
         @click="emit('navigate', 'charge-section', 'charge')"
       >
-        <span class="overview-quick-icon" aria-hidden="true">GO</span>
+        <span class="overview-quick-icon" aria-hidden="true">
+          <NavIcon name="charge" />
+        </span>
         <span class="overview-quick-copy">
           <strong>前往充电</strong>
           <span>扫码或输入编号都可以</span>
@@ -106,7 +111,9 @@ watch(
         type="button"
         @click="emit('navigate', 'records-section', 'records')"
       >
-        <span class="overview-quick-icon" aria-hidden="true">MR</span>
+        <span class="overview-quick-icon" aria-hidden="true">
+          <NavIcon name="records" />
+        </span>
         <span class="overview-quick-copy">
           <strong>本月记录</strong>
           <span>快速看看最近都充了什么</span>
@@ -117,7 +124,9 @@ watch(
         type="button"
         @click="emit('navigate', 'stations-section', 'stations')"
       >
-        <span class="overview-quick-icon" aria-hidden="true">ST</span>
+        <span class="overview-quick-icon" aria-hidden="true">
+          <NavIcon name="stations" />
+        </span>
         <span class="overview-quick-copy">
           <strong>空闲地点</strong>
           <span>马上看哪里还有可用位置</span>

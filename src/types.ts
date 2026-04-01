@@ -117,10 +117,7 @@ export interface StationSummaryCard {
 
 export interface StationCardModel extends StationSummary {
   id: string;
-  expanded: boolean;
-  visiblePiles: StationPile[];
   previewText: string;
-  canToggle: boolean;
 }
 
 export type StationFilter = 'all' | 'available' | 'busy' | 'fault';

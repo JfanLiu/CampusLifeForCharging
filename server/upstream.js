@@ -216,7 +216,7 @@ function buildStationOverview(rawList, pileMap = {}) {
 
   return {
     granularity: 'pile-detail',
-    note: '这里会展示各地点和充电桩的当前状态，逐桩列表默认折叠，方便在手机上快速浏览。',
+    note: '这里会先展示各地点的状态列表，进入单个地点后再查看逐桩详情，手机上会更清楚。',
     locations,
     totals,
   };

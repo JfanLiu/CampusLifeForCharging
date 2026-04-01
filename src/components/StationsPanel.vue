@@ -1,16 +1,22 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { StationCardModel, StationFilter, StationSummaryCard } from '../types';
 
-defineProps<{
+const props = defineProps<{
   hasOverview: boolean;
+  mobileLayout: boolean;
   note: string;
   resultsMeta: string;
   summaryCards: StationSummaryCard[];
   cards: StationCardModel[];
+  selectedStation: StationCardModel | null;
   query: string;
   activeFilter: StationFilter;
   loading: boolean;
 }>();
+
+const hasSelection = computed(() => Boolean(props.selectedStation));
+const selectedPiles = computed(() => props.selectedStation?.piles || []);
 
 const emit = defineEmits<{
   refresh: [];
@@ -18,9 +24,8 @@ const emit = defineEmits<{
   resetFilters: [];
   'update:query': [value: string];
   setFilter: [value: StationFilter];
-  expandAll: [];
-  collapseAll: [];
-  toggleStation: [stationId: string];
+  selectStation: [stationId: string];
+  clearSelection: [];
 }>();
 
 function updateQuery(event: Event) {
@@ -33,7 +38,7 @@ function updateQuery(event: Event) {
     <div class="panel-head panel-head-spread">
       <div>
         <p class="panel-kicker">地点总览</p>
-        <h2>所有地点的充电状态</h2>
+        <h2>先选地点，再看逐桩详情</h2>
       </div>
       <button class="button button-secondary" type="button" :disabled="loading" @click="emit('refresh')">
         {{ loading ? '刷新中...' : '刷新列表' }}
@@ -72,7 +77,7 @@ function updateQuery(event: Event) {
     <div class="station-toolbar">
       <label class="field station-search">
         <span>搜索地点</span>
-        <input :value="query" type="text" placeholder="搜索楼栋、地点或充电桩" @input="updateQuery" />
+        <input :value="query" type="text" placeholder="搜索楼栋或地点名称" @input="updateQuery" />
       </label>
       <div class="station-toolbar-side">
         <div class="filter-row">
@@ -109,72 +114,111 @@ function updateQuery(event: Event) {
             设备异常
           </button>
         </div>
-        <div class="toolbar toolbar-wrap station-bulk-actions">
-          <button class="button button-secondary button-small" type="button" @click="emit('expandAll')">
-            展开逐桩
-          </button>
-          <button class="button button-secondary button-small" type="button" @click="emit('collapseAll')">
-            收起逐桩
-          </button>
-        </div>
       </div>
     </div>
 
-    <div class="station-grid">
-      <article v-if="hasOverview && cards.length === 0" class="empty-card">
-        当前筛选条件下没有匹配的地点。
-      </article>
-      <article
-        v-for="item in cards"
-        :key="item.id"
-        class="station-card"
-        :class="`status-${item.statusCode || 'unknown'}`"
-      >
-        <div class="station-card-header">
-          <div>
-            <h3>{{ item.rname || '未命名地点' }}</h3>
-            <p class="muted">地点编号 {{ item.rid || '-' }}</p>
-          </div>
-          <span class="status-pill" :class="`status-${item.statusCode || 'unknown'}`">
-            {{ item.statusLabel || '状态未知' }}
-          </span>
-        </div>
-        <div class="station-meta">
-          <span class="meta-pill">空闲 {{ item.freeCount ?? 0 }}</span>
-          <span class="meta-pill">充电中 {{ item.chargingCount ?? 0 }}</span>
-          <span class="meta-pill">异常 {{ item.errorCount ?? 0 }}</span>
-          <span class="meta-pill">总计 {{ item.totalCount ?? 0 }}</span>
-        </div>
-        <div class="pile-section">
-          <div class="pile-section-head">
-            <div>
-              <div class="muted">逐桩状态</div>
-              <div class="pile-preview-note">{{ item.previewText }}</div>
+    <div
+      class="station-browser"
+      :class="{
+        'station-browser-mobile-list': mobileLayout && !hasSelection,
+        'station-browser-mobile-detail': mobileLayout && hasSelection,
+      }"
+    >
+      <div class="station-list-panel">
+        <article v-if="!hasOverview" class="empty-card">
+          还没有地点数据，稍后可点“刷新列表”再试。
+        </article>
+        <article v-else-if="cards.length === 0" class="empty-card">
+          当前筛选条件下没有匹配的地点。
+        </article>
+        <template v-else>
+          <button
+            v-for="item in cards"
+            :key="item.id"
+            class="station-list-row"
+            :class="{
+              'station-list-row-active': selectedStation?.id === item.id,
+              [`status-${item.statusCode || 'unknown'}`]: true,
+            }"
+            type="button"
+            @click="emit('selectStation', item.id)"
+          >
+            <div class="station-list-main">
+              <div class="station-list-title">
+                <h3>{{ item.rname || '未命名地点' }}</h3>
+                <p class="muted">地点编号 {{ item.rid || '-' }}</p>
+              </div>
+              <span class="status-pill" :class="`status-${item.statusCode || 'unknown'}`">
+                {{ item.statusLabel || '状态未知' }}
+              </span>
             </div>
-            <button
-              v-if="item.canToggle"
-              class="button button-secondary button-small"
-              type="button"
-              @click="emit('toggleStation', item.id)"
-            >
-              {{ item.expanded ? '收起逐桩' : `展开全部 ${item.piles?.length || 0} 根` }}
-            </button>
+            <div class="station-list-preview">{{ item.previewText }}</div>
+            <div class="station-row-meta">
+              <span class="meta-pill">空闲 {{ item.freeCount ?? 0 }}</span>
+              <span class="meta-pill">充电中 {{ item.chargingCount ?? 0 }}</span>
+              <span class="meta-pill">异常 {{ item.errorCount ?? 0 }}</span>
+              <span class="meta-pill">总计 {{ item.totalCount ?? 0 }}</span>
+            </div>
+            <span class="station-row-arrow">查看逐桩详情</span>
+          </button>
+        </template>
+      </div>
+
+      <div class="station-detail-panel">
+        <article v-if="selectedStation" class="station-detail-card" :class="`status-${selectedStation.statusCode || 'unknown'}`">
+          <div class="station-detail-head">
+            <div class="station-detail-title">
+              <button
+                v-if="mobileLayout"
+                class="button button-secondary button-small station-detail-back"
+                type="button"
+                @click="emit('clearSelection')"
+              >
+                返回地点列表
+              </button>
+              <p class="panel-kicker">地点详情</p>
+              <h3>{{ selectedStation.rname || '未命名地点' }}</h3>
+              <p class="muted">
+                地点编号 {{ selectedStation.rid || '-' }} · {{ selectedStation.previewText }}
+              </p>
+            </div>
+            <span class="status-pill" :class="`status-${selectedStation.statusCode || 'unknown'}`">
+              {{ selectedStation.statusLabel || '状态未知' }}
+            </span>
           </div>
 
-          <div v-if="item.visiblePiles.length" class="station-piles">
-            <div
-              v-for="pile in item.visiblePiles"
-              :key="`${item.id}-${pile.name}-${pile.status}`"
-              class="pile-item"
-              :class="`status-${pile.statusCode || 'unknown'}`"
-            >
-              <div class="pile-name">{{ pile.name || '未命名充电桩' }}</div>
-              <div class="pile-status">{{ pile.statusLabel || pile.status || '状态未知' }}</div>
-            </div>
+          <div class="station-meta station-meta-detail">
+            <span class="meta-pill">空闲 {{ selectedStation.freeCount ?? 0 }}</span>
+            <span class="meta-pill">充电中 {{ selectedStation.chargingCount ?? 0 }}</span>
+            <span class="meta-pill">异常 {{ selectedStation.errorCount ?? 0 }}</span>
+            <span class="meta-pill">总计 {{ selectedStation.totalCount ?? 0 }}</span>
           </div>
-          <div v-else class="empty-card">当前地点没有拿到逐桩数据。</div>
-        </div>
-      </article>
+
+          <div class="station-detail-piles">
+            <article v-if="selectedPiles.length === 0" class="empty-card">
+              当前地点没有拿到逐桩数据。
+            </article>
+            <template v-else>
+              <article
+                v-for="pile in selectedPiles"
+                :key="`${selectedStation.id}-${pile.name}-${pile.status}`"
+                class="pile-detail-item"
+                :class="`status-${pile.statusCode || 'unknown'}`"
+              >
+                <div class="pile-detail-top">
+                  <div class="pile-name">{{ pile.name || '未命名充电桩' }}</div>
+                  <div class="pile-status">{{ pile.statusLabel || pile.status || '状态未知' }}</div>
+                </div>
+                <p v-if="pile.note" class="pile-note">{{ pile.note }}</p>
+              </article>
+            </template>
+          </div>
+        </article>
+
+        <article v-else class="empty-card station-detail-empty">
+          从地点列表里选一个位置，再查看该地点每根充电桩的详细状态。
+        </article>
+      </div>
     </div>
   </section>
 </template>

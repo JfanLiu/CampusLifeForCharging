@@ -51,7 +51,6 @@ export function buildStationCardModels(
   overview: StationOverview | null,
   query: string,
   filter: StationFilter,
-  expandedStations: Set<string>,
 ): {
   cards: StationCardModel[];
   availableCount: number;
@@ -99,20 +98,11 @@ export function buildStationCardModels(
     .map((item) => {
       const id = buildStationKey(item);
       const piles = Array.isArray(item.piles) ? item.piles : [];
-      const expanded = expandedStations.has(id);
-      const visiblePiles = expanded ? piles : piles.slice(0, 6);
 
       return {
         ...item,
         id,
-        expanded,
-        visiblePiles,
-        previewText: piles.length
-          ? expanded
-            ? `已展开 ${piles.length} 根`
-            : `预览 ${visiblePiles.length} / ${piles.length} 根`
-          : '暂无逐桩数据',
-        canToggle: piles.length > 6,
+        previewText: buildStationPreview(item, piles.length),
       };
     });
 
@@ -121,6 +111,24 @@ export function buildStationCardModels(
     availableCount,
     totalCount: locations.length,
   };
+}
+
+function buildStationPreview(item: StationSummary, pileCount: number): string {
+  if (!pileCount) {
+    return '暂无逐桩数据';
+  }
+
+  const parts = [
+    Number(item.freeCount || 0) > 0 ? `空闲 ${item.freeCount} 根` : '',
+    Number(item.chargingCount || 0) > 0 ? `充电中 ${item.chargingCount} 根` : '',
+    Number(item.errorCount || 0) > 0 ? `异常 ${item.errorCount} 根` : '',
+  ].filter(Boolean);
+
+  if (!parts.length) {
+    return `共 ${pileCount} 根充电桩`;
+  }
+
+  return parts.join(' / ');
 }
 
 function compareStations(left: StationSummary, right: StationSummary): number {

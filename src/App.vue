@@ -29,6 +29,7 @@ const {
   activeRecordPreset,
   stationSummaryCards,
   stationView,
+  selectedStation,
   stationNote,
   stationResultsMeta,
   loginForm,
@@ -51,9 +52,8 @@ const {
   applyRecordPreset,
   setStationFilter,
   resetStationFilters,
-  toggleStation,
-  expandAllStations,
-  collapseAllStations,
+  selectStation,
+  clearStationSelection,
 } = useCampusLifeApp();
 
 const scannerVideo = ref<HTMLVideoElement | null>(null);
@@ -78,6 +78,9 @@ const hasStationOverview = computed(
 );
 
 function navigateTo(targetId: string, tab: MobileTab) {
+  if (tab === 'stations') {
+    clearStationSelection();
+  }
   setMobileTab(tab);
   scrollToSection(targetId);
 }
@@ -109,6 +112,16 @@ function focusChargeInput() {
 
 function sectionHidden(tab: MobileTab): boolean {
   return isMobileLayout.value && mobileTab.value !== tab;
+}
+
+function handleSelectStation(stationId: string) {
+  selectStation(stationId);
+  scrollToSection('stations-section');
+}
+
+function handleClearStationSelection() {
+  clearStationSelection();
+  scrollToSection('stations-section');
 }
 
 function scrollToSection(targetId: string) {
@@ -362,10 +375,12 @@ function scrollToSection(targetId: string) {
       <StationsPanel
         :class="{ 'mobile-panel-hidden': sectionHidden('stations') }"
         :has-overview="hasStationOverview"
+        :mobile-layout="isMobileLayout"
         :note="stationNote"
         :results-meta="stationResultsMeta"
         :summary-cards="stationSummaryCards"
         :cards="stationView.cards"
+        :selected-station="selectedStation"
         :query="stationQuery"
         :active-filter="stationFilter"
         :loading="busy.stations"
@@ -374,9 +389,8 @@ function scrollToSection(targetId: string) {
         @reset-filters="resetStationFilters"
         @update:query="stationQuery = $event"
         @set-filter="setStationFilter"
-        @expand-all="expandAllStations"
-        @collapse-all="collapseAllStations"
-        @toggle-station="toggleStation"
+        @select-station="handleSelectStation"
+        @clear-selection="handleClearStationSelection"
       />
     </main>
 

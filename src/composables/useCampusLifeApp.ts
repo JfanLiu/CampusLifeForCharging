@@ -25,7 +25,6 @@ import {
 import { buildRecordCardModel, summarizeRecords } from '../utils/records';
 import {
   buildStationCardModels,
-  buildStationKey,
   buildStationResultsMeta,
   buildStationSummaryCards,
 } from '../utils/stations';
@@ -45,7 +44,7 @@ export function useCampusLifeApp() {
   const isMobileLayout = ref(false);
   const stationQuery = ref('');
   const stationFilter = ref<StationFilter>('all');
-  const expandedStations = ref<Set<string>>(new Set());
+  const selectedStationId = ref('');
 
   const loginForm = reactive({
     username: '',
@@ -111,8 +110,8 @@ export function useCampusLifeApp() {
     return [
       { term: '账户余额', value: textOf(account.value.acbalance) },
       { term: '电表名称', value: textOf(account.value.jacountname) },
-      { term: '电表编号', value: textOf(account.value.jacountno) },
-      { term: '电表房间', value: textOf(account.value.jacountroom) },
+      { term: '学号', value: textOf(account.value.jacountno) },
+      { term: '院系', value: textOf(account.value.jacountroom) },
     ];
   });
   const chargeStatusRows = computed<DefinitionRow[]>(() => {
@@ -198,13 +197,14 @@ export function useCampusLifeApp() {
   const recordCards = computed(() => records.value.map((record, index) => buildRecordCardModel(record, index)));
   const activeRecordPreset = computed(() => detectRecordPreset(recordMonth.value));
   const stationSummaryCards = computed(() => buildStationSummaryCards(stations.value));
-  const stationView = computed(() =>
-    buildStationCardModels(stations.value, stationQuery.value, stationFilter.value, expandedStations.value),
+  const stationView = computed(() => buildStationCardModels(stations.value, stationQuery.value, stationFilter.value));
+  const selectedStation = computed(
+    () => stationView.value.cards.find((item) => item.id === selectedStationId.value) || null,
   );
   const stationNote = computed(
     () =>
       stations.value?.note ||
-      '这里会展示各地点和充电桩的当前状态，逐桩列表默认折叠，方便手机上快速浏览。',
+      '这里会先展示各地点的状态列表，点进单个地点后再看逐桩详情，手机上会更清楚。',
   );
   const stationResultsMeta = computed(() =>
     buildStationResultsMeta(
@@ -234,6 +234,12 @@ export function useCampusLifeApp() {
     },
     { immediate: true },
   );
+
+  watch(stationView, (value) => {
+    if (selectedStationId.value && !value.cards.some((item) => item.id === selectedStationId.value)) {
+      selectedStationId.value = '';
+    }
+  });
 
   function syncMobileLayout() {
     isMobileLayout.value = window.innerWidth <= 720;
@@ -462,25 +468,12 @@ export function useCampusLifeApp() {
     stationFilter.value = 'all';
   }
 
-  function toggleStation(stationId: string) {
-    const next = new Set(expandedStations.value);
-    if (next.has(stationId)) {
-      next.delete(stationId);
-    } else {
-      next.add(stationId);
-    }
-    expandedStations.value = next;
+  function selectStation(stationId: string) {
+    selectedStationId.value = stationId;
   }
 
-  function expandAllStations() {
-    const ids = (stations.value?.locations || [])
-      .map((item) => buildStationKey(item))
-      .filter(Boolean);
-    expandedStations.value = new Set(ids);
-  }
-
-  function collapseAllStations() {
-    expandedStations.value = new Set();
+  function clearStationSelection() {
+    selectedStationId.value = '';
   }
 
   function clearSessionState() {
@@ -541,6 +534,7 @@ export function useCampusLifeApp() {
     activeRecordPreset,
     stationSummaryCards,
     stationView,
+    selectedStation,
     stationNote,
     stationResultsMeta,
     loginForm,
@@ -563,9 +557,8 @@ export function useCampusLifeApp() {
     applyRecordPreset,
     setStationFilter,
     resetStationFilters,
-    toggleStation,
-    expandAllStations,
-    collapseAllStations,
+    selectStation,
+    clearStationSelection,
   };
 }
 
