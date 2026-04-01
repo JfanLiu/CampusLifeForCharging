@@ -7,13 +7,25 @@
     "node": ">=18"
   },
   "scripts": {
+    "build": "vite build",
+    "dev": "concurrently -k -n server,client -c yellow,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:client": "vite",
+    "dev:server": "node --watch server/index.js",
+    "preview": "vite preview",
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "check": "node --check public/app.js && node --check server/config.js && node --check server/sessionStore.js && node --check server/upstream.js && node --check server/index.js"
+    "check": "vue-tsc --noEmit && node --check server/config.js && node --check server/sessionStore.js && node --check server/upstream.js && node --check server/index.js"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
     "fast-xml-parser": "^4.5.0",
-    "iconv-lite": "^0.6.3"
+    "iconv-lite": "^0.6.3",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
+    "vue-tsc": "^3.1.1"
   }
 }

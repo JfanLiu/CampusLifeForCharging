@@ -24,6 +24,27 @@
 2. **日常无忧充电**：平时出门只需带上你的 iPhone！直接使用苹果手机浏览器访问你部署好的服务网址，即可在网页里完成日常操作：登录、查看状态和余额、扫码或输入编号发起充电。
 3. **偶尔充值**：当账户余额不足时，再回到安卓设备上的官方 App 完成充值即可。
 
+## 技术栈
+
+- 前端：Vue 3 + TypeScript + Vite
+- 后端：Node.js 原生 HTTP 服务
+- 协议适配：保留现有校园生活上游接口封装
+
+## 开发
+
+需要 Node.js 18+ 环境。
+
+```sh
+npm install
+cp .env.example .env
+npm run dev
+```
+
+开发模式下：
+
+- Node API 服务默认运行在 `http://127.0.0.1:8787`
+- Vite 前端开发服务默认运行在 `http://127.0.0.1:5173`
+
 ## 部署
 
 需要 Node.js 18+ 环境。
@@ -31,6 +52,7 @@
 ```sh
 npm install
 cp .env.example .env
+npm run build
 npm start
 ```
 

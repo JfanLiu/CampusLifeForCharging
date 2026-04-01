@@ -31,11 +31,14 @@ const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.map': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
 };
 
 function isSecureRequest(req) {
@@ -272,6 +275,10 @@ function resolveStaticPath(requestPath) {
 }
 
 function serveStatic(req, res, requestUrl) {
+  if (!fs.existsSync(publicRoot) || !fs.statSync(publicRoot).isDirectory()) {
+    return sendError(res, 503, '前端资源不存在，请先执行 npm run build');
+  }
+
   let targetPath = resolveStaticPath(requestUrl.pathname);
   if (!targetPath) {
     return sendError(res, 400, '非法路径');
@@ -281,14 +288,28 @@ function serveStatic(req, res, requestUrl) {
     targetPath = path.join(publicRoot, 'index.html');
   }
 
+  if (!fs.existsSync(targetPath) || fs.statSync(targetPath).isDirectory()) {
+    return sendError(res, 503, '前端资源不存在，请先执行 npm run build');
+  }
+
   const extension = path.extname(targetPath).toLowerCase();
   const contentType = mimeTypes[extension] || 'application/octet-stream';
+  const cacheControl =
+    extension === '.html'
+      ? 'no-store'
+      : 'public, max-age=31536000, immutable';
 
   setDefaultHeaders(res);
   res.writeHead(200, {
     'Content-Type': contentType,
-    'Cache-Control': extension ? 'public, max-age=300' : 'no-store',
+    'Cache-Control': cacheControl,
   });
+
+  if (req.method === 'HEAD') {
+    res.end();
+    return;
+  }
+
   fs.createReadStream(targetPath).pipe(res);
 }
 
