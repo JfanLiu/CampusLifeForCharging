@@ -29,18 +29,19 @@ iOS 版本不能在 Windows 上直接构建，需要使用 macOS + Xcode。
 #### 调试运行
 在项目根目录下执行：
 ```sh
-cd web
-npm install
-npm start
+npm run web:install
+npm run web:start
 ```
 
 默认会在 `http://localhost:8787` 启动 Web 服务。
+也可以直接进入 `web/` 目录运行；独立说明见 `web/README.md`。
 
 #### 部署说明
 - `web/` 是独立目录，不依赖 React Native 的 Metro 或原生编译环境
 - Node 服务会同时提供静态前端页面和 `/api/*` 代理接口
 - 生产环境建议通过 Nginx / Caddy 反向代理到该 Node 进程，并启用 HTTPS
-- 当前会话默认保存在进程内存中，服务重启后需要重新登录
+- `web/.env.example` 提供了独立运行时配置模板，服务会自动读取 `web/.env`
+- 当前会话默认会持久化到 `web/data/sessions.json`，服务重启后会自动恢复未过期会话
 
 #### 功能覆盖
 - 登录、余额查询、充电状态查询
@@ -55,6 +56,7 @@ npm start
 - 现有充值接口返回的是 `alipay.trade.app.pay` 类型的 App 支付订单；原版客户端通过 Alipay SDK 完成支付，这类订单无法在纯 Web 中稳定完成付款
 - 若要实现真正的 Web 充值，需要上游改为返回 `alipay.trade.wap.pay` 或其他网页支付链路
 - 逐桩状态依赖隐藏接口 `getsublist(rid)`，页面加载会比仅看地点汇总更慢一些
+- 若部署在容器中，应将 `web/data/` 挂载到持久化存储，否则容器重建后仍会丢失会话
 
 ### Android
 #### 环境配置

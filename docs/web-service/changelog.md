@@ -22,3 +22,8 @@
 - Summary: 查实充值链路依赖原生 Alipay SDK 并修正 Web 提示
 - Touchpoints: `web/server/upstream.js`, `web/public/app.js`, `README.md`, `docs/web-service/*`
 - Behavior: 经反编译确认原版充值调用 `payV2(...)`，Web 端不再把 App 支付订单误导成可直接付款的网页入口
+
+- Date: 2026-04-01
+- Summary: 将 Web 收口为单仓库中的独立子项目
+- Touchpoints: `web/.env.example`, `web/.gitignore`, `web/README.md`, `web/server/config.js`, `web/server/sessionStore.js`, `web/server/index.js`, `web/package.json`, `package.json`, `README.md`, `docs/web-service/*`
+- Behavior: 新增独立运行配置模板、文件持久化会话、健康检查接口、根目录快捷脚本和独立部署文档，Web 服务重启后可恢复未过期会话

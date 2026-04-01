@@ -1,11 +1,33 @@
 ## Entities / Schemas
 
-- Session：当前浏览器会话，绑定 `userid`
-- UpstreamOrder：发送给上游接口的业务请求体
-- UpstreamResponse：上游返回并解密后的 JSON 结构
-- PayLaunch：Web 端可执行的支付启动信息
+- `Session`：当前浏览器会话，绑定 `userid` 与 `profile`
+- `PersistedSessionFile`：会话落盘文件，保存所有未过期 `Session`
+- `RuntimeConfig`：`web/.env` 提供的运行时配置
+- `UpstreamOrder`：发送给上游接口的业务请求体
+- `UpstreamResponse`：上游返回并解密后的 JSON 结构
+- `PayLaunch`：Web 端可执行的支付启动信息
 
 ## Contracts (API)
+
+### `GET /api/health`
+
+返回服务健康状态与会话存储模式。
+
+示例响应：
+
+```json
+{
+  "ok": true,
+  "app": "AltCampusLife Web",
+  "now": "2026-04-01T10:00:00.000Z",
+  "sessionStore": {
+    "mode": "file",
+    "ttlMs": 604800000,
+    "filePath": "/srv/altcampuslife/web/data/sessions.json",
+    "sessionCount": 3
+  }
+}
+```
 
 ### `GET /api/session`
 
@@ -282,6 +304,43 @@
 }
 ```
 
+## Runtime Config
+
+| Field | Type | Required | Constraints | Notes |
+| --- | --- | --- | --- | --- |
+| `HOST` | string | 否 | 非空 | HTTP 监听地址 |
+| `PORT` | number | 否 | 正整数 | HTTP 监听端口 |
+| `SESSION_COOKIE` | string | 否 | 非空 | Cookie 名称 |
+| `SESSION_TTL_MS` | number | 否 | 正整数 | 会话过期毫秒数 |
+| `SESSION_PERSIST_ENABLED` | boolean | 否 | `true/false` | 是否启用文件持久化 |
+| `SESSION_FILE` | string | 否 | 相对或绝对路径 | 会话文件路径 |
+| `SESSION_WRITE_DEBOUNCE_MS` | number | 否 | 大于等于 0 | 落盘防抖时间 |
+| `REQUEST_TIMEOUT_MS` | number | 否 | 正整数 | 上游请求超时 |
+| `MIN_PAY_AMOUNT` | number | 否 | 大于 0 | 充值金额下限 |
+
+## Persisted Session File
+
+落盘文件为 JSON，示例：
+
+```json
+{
+  "version": 1,
+  "sessions": [
+    [
+      "abc123",
+      {
+        "userid": 123456,
+        "profile": {
+          "username": "13800138000"
+        },
+        "createdAt": 1711963200000,
+        "updatedAt": 1711966800000
+      }
+    ]
+  ]
+}
+```
+
 ## Upstream Request Model
 
 统一以 `order=<DES加密后的JSON字符串>` 形式 POST 到上游。
@@ -316,8 +375,10 @@
 - 当 `method=alipay.trade.app.pay` 时，Web 端只能展示调试信息和限制说明，不能视为可直接支付
 - 地点状态总览基于 `getlist` + `getsublist(rid)` 组合构建
 - 浏览器扫码优先依赖 `BarcodeDetector`；不支持时保留手动输入作为退化路径
+- 当 `SESSION_PERSIST_ENABLED=true` 时，服务重启后应尝试恢复未过期会话
 
 ## Compatibility Notes
 
 - Web 版新增的是 HTTP/JSON API，不影响原 React Native 逻辑
 - 充值接口在 Web 中为兼容实现；若上游未来支持 WAP 支付，可保持前端 API 不变，仅替换服务端策略
+- 新增的健康检查与配置机制仅影响 `web/`，不会改变上游协议格式

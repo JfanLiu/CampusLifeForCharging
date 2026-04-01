@@ -3,6 +3,7 @@ const path = require('node:path');
 const http = require('node:http');
 const {
   APP_NAME,
+  HOST,
   PORT,
   PUBLIC_DIR,
   SESSION_COOKIE,
@@ -123,6 +124,15 @@ function sessionPayload(session) {
 }
 
 async function handleApiRequest(req, res, requestUrl) {
+  if (req.method === 'GET' && requestUrl.pathname === '/api/health') {
+    return sendJson(res, 200, {
+      ok: true,
+      app: APP_NAME,
+      now: new Date().toISOString(),
+      sessionStore: sessionStore.snapshot(),
+    });
+  }
+
   if (req.method === 'GET' && requestUrl.pathname === '/api/session') {
     const { session } = getSessionContext(req);
     if (!session) {
@@ -379,6 +389,24 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`${APP_NAME} listening on http://localhost:${PORT}`);
+registerShutdownHooks();
+
+server.listen(PORT, HOST, () => {
+  console.log(`${APP_NAME} listening on http://${HOST}:${PORT}`);
 });
+
+function registerShutdownHooks() {
+  const flushAndExit = (code) => {
+    try {
+      sessionStore.flushSync();
+    } finally {
+      process.exit(code);
+    }
+  };
+
+  process.once('SIGINT', () => flushAndExit(0));
+  process.once('SIGTERM', () => flushAndExit(0));
+  process.once('beforeExit', () => {
+    sessionStore.flushSync();
+  });
+}

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "dev": "node --watch server/index.js",
+    "check": "node --check public/app.js && node --check server/config.js && node --check server/sessionStore.js && node --check server/upstream.js && node --check server/index.js"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
