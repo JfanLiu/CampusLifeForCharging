@@ -1,56 +1,19 @@
 {
-  "name": "AltCampusLife",
-  "version": "1.0.3",
+  "name": "campuslifeforcharging-web",
+  "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "lint": "eslint .",
-    "start": "react-native start",
-    "test": "jest",
-    "web:install": "npm --prefix web install",
-    "web:dev": "npm --prefix web run dev",
-    "web:start": "npm --prefix web start",
-    "web:check": "npm --prefix web run check"
-  },
-  "dependencies": {
-    "@ant-design/icons-react-native": "^2.3.2",
-    "@ant-design/react-native": "^5.1.2",
-    "@creeper12356/altcampuslifeservice": "^1.0.5",
-    "@react-native-async-storage/async-storage": "^1.22.3",
-    "@react-navigation/native": "^6.1.17",
-    "@react-navigation/native-stack": "^6.9.26",
-    "@uiw/react-native-alipay": "^5.0.2",
-    "react": "18.2.0",
-    "react-native": "^0.75.4",
-    "react-native-camera": "^4.2.1",
-    "react-native-device-info": "^13.1.0",
-    "react-native-fs": "^2.20.0",
-    "react-native-progress": "^5.0.1",
-    "react-native-safe-area-context": "^4.10.1",
-    "react-native-screens": "^3.31.1",
-    "react-native-user-agent": "^2.3.1",
-    "rn-update-apk": "^5.0.0"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@babel/preset-env": "^7.20.0",
-    "@babel/runtime": "^7.20.0",
-    "@react-native/babel-preset": "0.74.1",
-    "@react-native/eslint-config": "0.73.2",
-    "@react-native/metro-config": "0.73.5",
-    "@react-native/typescript-config": "0.73.1",
-    "@types/react": "^18.2.6",
-    "@types/react-test-renderer": "^18.0.0",
-    "@types/web": "^0.0.143",
-    "babel-jest": "^29.6.3",
-    "eslint": "^8.19.0",
-    "jest": "^29.6.3",
-    "prettier": "2.8.8",
-    "react-test-renderer": "18.2.0",
-    "typescript": "5.0.4"
-  },
+  "description": "Mobile-first web charging portal for CampusLife users",
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "check": "node --check public/app.js && node --check server/config.js && node --check server/sessionStore.js && node --check server/upstream.js && node --check server/index.js"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "fast-xml-parser": "^4.5.0",
+    "iconv-lite": "^0.6.3"
   }
 }

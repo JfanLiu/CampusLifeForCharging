@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CampusLifeForCharging</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="grid-lines"></div>
+
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark">CF</div>
+          <div>
+            <p class="eyebrow">CampusLifeForCharging</p>
+            <h1 class="topbar-title">校园充电 Web</h1>
+          </div>
+        </div>
+        <div class="topbar-pill">
+          <span class="topbar-dot"></span>
+          <span>适合 iPhone 和手机浏览器日常使用的校园充电入口</span>
+        </div>
+      </header>
+
+      <section id="hero-section" class="hero panel" data-mobile-panel="welcome">
+        <div class="hero-copy-block">
+          <p class="eyebrow">Mobile-First Charging Portal</p>
+          <h2>给苹果手机用户一个更方便的校园充电入口。</h2>
+          <p class="hero-copy">
+            这个网页版本专注于登录、查余额、看地点状态、扫码或输入编号发起充电，以及查看月度记录。
+            需要充值时，仍然回到官方 App 完成，避免把浏览器做成一个看起来能付、实际上付不通的入口。
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#login-view">登录校园账户</a>
+            <a class="button button-secondary" href="#stations-section">查看地点状态</a>
+          </div>
+        </div>
+
+        <div class="hero-aside">
+          <article class="capability-card">
+            <p class="panel-kicker">日常够用</p>
+            <h3>登录、查余额、看状态、直接充电</h3>
+            <p>
+              日常最常用的动作都保留在浏览器里，适合临时打开快速判断哪里有空闲桩、当前是否正在充电、余额够不够。
+            </p>
+          </article>
+          <article class="capability-card capability-card-alert">
+            <p class="panel-kicker">充值说明</p>
+            <h3>充值仍需在官方 App 中完成</h3>
+            <p>
+              目前官方支付流程仍依赖 App 内能力，所以网页只负责查余额和刷新结果，不会误导你在浏览器里反复尝试支付。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <main class="main-stack">
+        <section id="login-view" class="panel auth-panel" data-mobile-panel="login">
+          <div class="login-layout">
+            <div>
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">登录</p>
+                  <h2>登录校园账户</h2>
+                </div>
+              </div>
+              <p class="panel-note">
+                使用你平时在校园充电系统里使用的账号密码登录。网页只保留当前会话需要的信息，关闭或退出后可重新登录。
+              </p>
+              <form id="login-form" class="form-stack">
+                <label class="field">
+                  <span>账号</span>
+                  <input
+                    id="login-username"
+                    name="username"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="手机号 / 学号 / 账号"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>密码</span>
+                  <input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="登录密码"
+                    required
+                  />
+                </label>
+                <button id="login-submit" class="button button-primary" type="submit">
+                  登录
+                </button>
+              </form>
+            </div>
+
+            <aside class="auth-side">
+              <article class="mini-card">
+                <h3>更适合手机使用</h3>
+                <p>
+                  输入框、按钮和卡片都按手机触控场景做了放大，站着用、路上看、到桩旁边操作都会更顺手。
+                </p>
+              </article>
+              <article class="mini-card">
+                <h3>适合日常打开的场景</h3>
+                <ul class="feature-list">
+                  <li>出门前先看哪些地点还有空闲桩</li>
+                  <li>到现场后扫码或输入编号直接充电</li>
+                  <li>随手查余额、当前状态和本月记录</li>
+                </ul>
+              </article>
+            </aside>
+          </div>
+        </section>
+
+        <section id="dashboard-view" class="dashboard hidden">
+          <section class="panel overview-panel" data-mobile-panel="overview">
+            <div class="overview-shell">
+              <div class="profile-card">
+                <div class="profile-meta">
+                  <p class="panel-kicker">当前会话</p>
+                  <h2 id="profile-name">未登录</h2>
+                  <p id="profile-phone" class="muted">-</p>
+                </div>
+                <div id="profile-avatar" class="avatar-shell">CF</div>
+              </div>
+
+              <div class="session-actions toolbar toolbar-wrap">
+                <a class="button button-secondary" href="#charge-section">开始充电</a>
+                <a class="button button-secondary" href="#records-section">查看记录</a>
+                <a class="button button-secondary" href="#stations-section">地点状态</a>
+                <a class="button button-secondary" href="#tools-section">使用说明</a>
+                <button
+                  id="logout-button"
+                  class="button button-danger"
+                  data-logout-trigger
+                  type="button"
+                >
+                  退出登录
+                </button>
+              </div>
+            </div>
+
+            <div class="overview-quick-grid">
+              <button id="refresh-overview" class="overview-quick-action" type="button">
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>刷新总览</strong>
+                  <span>余额、状态和地点一起刷新</span>
+                </span>
+              </button>
+              <button
+                class="overview-quick-action"
+                data-mobile-nav-jump="charge"
+                data-mobile-nav-target="charge-section"
+                type="button"
+              >
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M13 2 6 13h5l-1 9 8-12h-5l0-8Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>前往充电</strong>
+                  <span>扫码或输入编号都可以</span>
+                </span>
+              </button>
+              <button
+                class="overview-quick-action"
+                data-mobile-nav-jump="records"
+                data-mobile-nav-target="records-section"
+                type="button"
+              >
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M7 3h8l4 4v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                    <path
+                      d="M15 3v5h5M9 12h6M9 16h6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>本月记录</strong>
+                  <span>快速看看最近都充了什么</span>
+                </span>
+              </button>
+              <button
+                class="overview-quick-action"
+                data-mobile-nav-jump="stations"
+                data-mobile-nav-target="stations-section"
+                type="button"
+              >
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                    <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>空闲地点</strong>
+                  <span>马上看哪里还有可用位置</span>
+                </span>
+              </button>
+            </div>
+
+            <div id="dashboard-stats" class="dashboard-stats"></div>
+          </section>
+
+          <div class="grid-two">
+            <section id="account-section" class="panel" data-mobile-panel="overview">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">账户</p>
+                  <h2>余额与账户信息</h2>
+                </div>
+                <button id="refresh-account" class="button button-secondary" type="button">
+                  刷新余额
+                </button>
+              </div>
+              <div id="account-summary" class="definition-list"></div>
+            </section>
+
+            <section id="charge-status-section" class="panel" data-mobile-panel="overview">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">充电状态</p>
+                  <h2>当前充电情况</h2>
+                </div>
+                <button
+                  id="refresh-charge-status"
+                  class="button button-secondary"
+                  type="button"
+                >
+                  刷新状态
+                </button>
+              </div>
+              <div id="charge-status-summary" class="definition-list"></div>
+            </section>
+          </div>
+
+          <div class="grid-two">
+            <section id="charge-section" class="panel panel-highlight" data-mobile-panel="charge">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">充电</p>
+                  <h2>输入编号或扫码</h2>
+                </div>
+              </div>
+              <p class="panel-note">
+                支持扫码和手动输入两种方式，选择你觉得方便的就可以。
+              </p>
+              <div class="charge-focus-card">
+                <div class="charge-focus-copy">
+                  <p class="panel-kicker">现场操作</p>
+                  <h3>扫码或输入编号都可以，保持简单直接。</h3>
+                  <p id="charge-context-note" class="panel-note">
+                    如果当前浏览器支持网页扫码，可以直接打开相机；如果不支持，也可以手动输入编号继续使用。
+                  </p>
+                </div>
+                <div class="charge-focus-actions">
+                  <button
+                    id="scan-trigger-hero"
+                    class="button button-primary charge-scan-button"
+                    data-scan-trigger
+                    type="button"
+                  >
+                    打开扫码
+                  </button>
+                  <button
+                    id="focus-charge-input"
+                    class="button button-secondary charge-manual-button"
+                    type="button"
+                  >
+                    输入编号
+                  </button>
+                </div>
+                <div id="charge-quick-meta" class="charge-quick-meta"></div>
+              </div>
+              <form id="charge-form" class="form-stack">
+                <label class="field">
+                  <span>二维码后 8 位</span>
+                  <input
+                    id="charge-qrcode"
+                    name="qrcode"
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="例如 12345678"
+                    required
+                  />
+                </label>
+                <div class="toolbar toolbar-wrap">
+                  <button class="button button-primary" type="submit">开始充电</button>
+                  <button
+                    id="scan-trigger"
+                    class="button button-secondary"
+                    data-scan-trigger
+                    type="button"
+                  >
+                    打开扫码
+                  </button>
+                </div>
+              </form>
+              <p class="panel-note">
+                如果当前浏览器支持网页扫码，会直接调用相机；如果不支持，请改用手动输入编号。
+              </p>
+            </section>
+
+            <section id="recharge-section" class="panel" data-mobile-panel="charge">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">充值</p>
+                  <h2>在官方 App 中完成充值</h2>
+                </div>
+                <button id="payment-refresh" class="button button-secondary" type="button">
+                  充值后刷新余额
+                </button>
+              </div>
+              <p class="panel-note">
+                目前官方充值流程仍需要在官方 App 中完成。充值完成后回到这个网页，点击上方按钮刷新余额即可。
+              </p>
+              <div class="instruction-list">
+                <div class="instruction-row">
+                  <span class="instruction-index">1</span>
+                  <div>
+                    <strong>打开官方 App</strong>
+                    <p>在官方 App 中完成充值。</p>
+                  </div>
+                </div>
+                <div class="instruction-row">
+                  <span class="instruction-index">2</span>
+                  <div>
+                    <strong>充值完成后回到网页</strong>
+                    <p>一般不需要重新登录，当前会话会继续保留。</p>
+                  </div>
+                </div>
+                <div class="instruction-row">
+                  <span class="instruction-index">3</span>
+                  <div>
+                    <strong>点击刷新余额</strong>
+                    <p>余额更新后，就可以继续查状态和充电。</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid-two">
+            <section id="records-section" class="panel" data-mobile-panel="records">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">记录</p>
+                  <h2>月度充电记录</h2>
+                </div>
+              </div>
+              <div class="records-query-card">
+                <div class="records-query-copy">
+                  <p class="panel-note">
+                    默认显示当前月份，也可以切到上个月，或者手动指定年份和月份查询。
+                  </p>
+                </div>
+                <div class="record-presets">
+                  <button class="chip" data-record-preset="current" type="button">本月</button>
+                  <button class="chip" data-record-preset="previous" type="button">上月</button>
+                </div>
+                <form id="records-form" class="record-form">
+                  <label class="field compact-field">
+                    <span>年份</span>
+                    <input id="records-yy" type="text" inputmode="numeric" maxlength="4" required />
+                  </label>
+                  <label class="field compact-field">
+                    <span>月份</span>
+                    <input id="records-mm" type="text" inputmode="numeric" maxlength="2" required />
+                  </label>
+                  <button class="button button-secondary" type="submit">查询记录</button>
+                </form>
+              </div>
+              <div id="records-summary" class="records-summary"></div>
+              <div id="records-list" class="record-list"></div>
+            </section>
+
+            <section id="tools-section" class="panel" data-mobile-panel="more">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">使用说明</p>
+                  <h2>常见问题</h2>
+                </div>
+              </div>
+              <div class="advanced-grid">
+                <article class="subpanel">
+                  <h3>扫码打不开怎么办？</h3>
+                  <p>
+                    如果浏览器支持网页扫码，会直接打开相机；如果不支持，请在充电页手动输入二维码对应编号。
+                  </p>
+                </article>
+                <article class="subpanel">
+                  <h3>充值为什么不在网页里做？</h3>
+                  <p>
+                    目前官方充值流程仍然依赖官方 App，所以网页主要负责查询、查看状态和发起充电。
+                  </p>
+                </article>
+                <article class="subpanel">
+                  <h3>为什么要自己部署？</h3>
+                  <p>
+                    这是一个自部署网页方案，适合给自己和身边用 iPhone 的同学提供更方便的浏览器入口。
+                  </p>
+                </article>
+                <article class="subpanel">
+                  <h3>会话多久会失效？</h3>
+                  <p>
+                    默认会保留一段时间；如果你清理浏览器数据、主动退出，或者服务重启后未恢复会话，需要重新登录。
+                  </p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel settings-panel" data-mobile-panel="more">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">项目与反馈</p>
+                <h2>源码、反馈与使用建议</h2>
+              </div>
+            </div>
+            <div class="toolbar toolbar-wrap">
+              <button class="button button-danger" data-logout-trigger type="button">
+                退出登录
+              </button>
+              <a
+                class="button button-secondary"
+                href="https://github.com/JfanLiu/CampusLifeForCharging"
+                target="_blank"
+                rel="noreferrer"
+              >
+                源码仓库
+              </a>
+              <a
+                class="button button-secondary"
+                href="https://github.com/JfanLiu/CampusLifeForCharging/issues"
+                target="_blank"
+                rel="noreferrer"
+              >
+                问题反馈
+              </a>
+            </div>
+          </section>
+        </section>
+
+        <section id="stations-section" class="panel station-panel" data-mobile-panel="stations">
+          <div class="panel-head panel-head-spread">
+            <div>
+              <p class="panel-kicker">地点总览</p>
+              <h2>所有地点的充电状态</h2>
+            </div>
+            <button id="refresh-stations" class="button button-secondary" type="button">
+              刷新列表
+            </button>
+          </div>
+          <p id="station-note" class="panel-note">
+            这里会展示所有地点和各充电桩的状态，默认按地点折叠，方便手机上快速浏览。
+          </p>
+          <div class="station-results-bar">
+            <div id="station-results-meta" class="station-results-meta">
+              支持搜索地点、按状态筛选，并快速切到可充电地点。
+            </div>
+            <div class="station-results-actions">
+              <button
+                id="station-available-shortcut"
+                class="button button-secondary button-small"
+                type="button"
+              >
+                只看可充电
+              </button>
+              <button
+                id="station-reset-filters"
+                class="button button-secondary button-small"
+                type="button"
+              >
+                清空筛选
+              </button>
+            </div>
+          </div>
+          <div id="station-summary" class="station-summary"></div>
+          <div class="station-toolbar">
+            <label class="field station-search">
+              <span>搜索地点</span>
+              <input id="station-search" type="text" placeholder="搜索楼栋、地点或充电桩" />
+            </label>
+            <div class="station-toolbar-side">
+              <div id="station-filters" class="filter-row">
+                <button class="chip chip-active" data-station-filter="all" type="button">
+                  全部
+                </button>
+                <button class="chip" data-station-filter="available" type="button">
+                  有空位
+                </button>
+                <button class="chip" data-station-filter="busy" type="button">
+                  已占满
+                </button>
+                <button class="chip" data-station-filter="fault" type="button">
+                  设备异常
+                </button>
+              </div>
+              <div class="toolbar toolbar-wrap station-bulk-actions">
+                <button
+                  id="expand-stations"
+                  class="button button-secondary button-small"
+                  type="button"
+                >
+                  展开逐桩
+                </button>
+                <button
+                  id="collapse-stations"
+                  class="button button-secondary button-small"
+                  type="button"
+                >
+                  收起逐桩
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="station-grid" class="station-grid"></div>
+        </section>
+      </main>
+
+      <nav id="mobile-guest-nav" class="mobile-nav" aria-label="移动端快速导航">
+        <button
+          class="mobile-nav-item mobile-nav-item-active"
+          data-mobile-nav="welcome"
+          data-mobile-nav-target="hero-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1v-8.5Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">首页</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="login"
+          data-mobile-nav-target="login-view"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 20a7 7 0 0 1 14 0"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">登录</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="stations"
+          data-mobile-nav-target="stations-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+              <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">地点</span>
+        </button>
+      </nav>
+
+      <nav id="mobile-auth-nav" class="mobile-nav hidden" aria-label="移动端功能导航">
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="overview"
+          data-mobile-nav-target="dashboard-view"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M4 5h7v6H4zM13 5h7v10h-7zM4 13h7v6H4zM13 17h7v2h-7z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">总览</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="charge"
+          data-mobile-nav-target="charge-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M13 2 6 13h5l-1 9 8-12h-5l0-8Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">充电</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="records"
+          data-mobile-nav-target="records-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M7 3h8l4 4v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+              <path
+                d="M15 3v5h5M9 12h6M9 16h6"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">记录</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="stations"
+          data-mobile-nav-target="stations-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+              <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">地点</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="more"
+          data-mobile-nav-target="tools-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="6" cy="12" r="1.6" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+              <circle cx="18" cy="12" r="1.6" fill="currentColor" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">更多</span>
+        </button>
+      </nav>
+    </div>
+
+    <div id="scanner-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <p class="panel-kicker">扫码</p>
+            <h2>对准设备二维码</h2>
+          </div>
+          <button id="scanner-close" class="icon-button" type="button" aria-label="关闭扫码窗口">
+            ×
+          </button>
+        </div>
+        <video id="scanner-video" autoplay muted playsinline></video>
+        <p id="scanner-status" class="panel-note">正在尝试打开后置摄像头。</p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden" data-tone="success"></div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
