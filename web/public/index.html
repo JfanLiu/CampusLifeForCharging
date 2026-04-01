@@ -435,17 +435,29 @@
                   <h2>月度充电记录</h2>
                 </div>
               </div>
-              <form id="records-form" class="record-form">
-                <label class="field compact-field">
-                  <span>年份</span>
-                  <input id="records-yy" type="text" inputmode="numeric" maxlength="4" required />
-                </label>
-                <label class="field compact-field">
-                  <span>月份</span>
-                  <input id="records-mm" type="text" inputmode="numeric" maxlength="2" required />
-                </label>
-                <button class="button button-secondary" type="submit">查询记录</button>
-              </form>
+              <div class="records-query-card">
+                <div class="records-query-copy">
+                  <p class="panel-note">
+                    默认查当前月份；在手机上可以直接切到上个月，或者手动指定年月。
+                  </p>
+                </div>
+                <div class="record-presets">
+                  <button class="chip" data-record-preset="current" type="button">本月</button>
+                  <button class="chip" data-record-preset="previous" type="button">上月</button>
+                </div>
+                <form id="records-form" class="record-form">
+                  <label class="field compact-field">
+                    <span>年份</span>
+                    <input id="records-yy" type="text" inputmode="numeric" maxlength="4" required />
+                  </label>
+                  <label class="field compact-field">
+                    <span>月份</span>
+                    <input id="records-mm" type="text" inputmode="numeric" maxlength="2" required />
+                  </label>
+                  <button class="button button-secondary" type="submit">查询记录</button>
+                </form>
+              </div>
+              <div id="records-summary" class="records-summary"></div>
               <div id="records-list" class="record-list"></div>
             </section>
 

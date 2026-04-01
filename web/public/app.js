@@ -66,9 +66,11 @@ function captureElements() {
     paymentRefresh: document.getElementById('payment-refresh'),
     paymentUrl: document.getElementById('payment-url'),
     recordsForm: document.getElementById('records-form'),
+    recordsSummary: document.getElementById('records-summary'),
     recordsYear: document.getElementById('records-yy'),
     recordsMonth: document.getElementById('records-mm'),
     recordsList: document.getElementById('records-list'),
+    recordPresetButtons: document.querySelectorAll('[data-record-preset]'),
     fetchPriceInfo: document.getElementById('fetch-price-info'),
     fetchJacount: document.getElementById('fetch-jacount'),
     fetchChargeList: document.getElementById('fetch-charge-list'),
@@ -116,6 +118,11 @@ function bindEvents() {
   elements.paymentOpen.addEventListener('click', openPaymentLink);
   elements.paymentRefresh.addEventListener('click', refreshAfterPayment);
   elements.recordsForm.addEventListener('submit', handleRecordsSubmit);
+  elements.recordPresetButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      applyRecordPreset(button.getAttribute('data-record-preset') || '');
+    });
+  });
   elements.fetchPriceInfo.addEventListener('click', () => loadPriceInfo(true));
   elements.fetchJacount.addEventListener('click', () => loadJacount(true));
   elements.fetchChargeList.addEventListener('click', () => loadChargeList(true));
@@ -389,6 +396,15 @@ async function loadStations(withToast = false) {
   }
 }
 
+async function loadRecordsForMonth(yy, mm) {
+  state.records = await api(
+    `/api/charge-records?yy=${encodeURIComponent(yy)}&mm=${encodeURIComponent(mm)}`,
+  );
+  state.recordMonth = { yy, mm };
+  renderRecords();
+  renderDashboardStats();
+}
+
 async function handleChargeSubmit(event) {
   event.preventDefault();
   const qrcode = elements.chargeQrcode.value.trim();
@@ -478,17 +494,29 @@ async function handleRecordsSubmit(event) {
     event.submitter || elements.recordsForm.querySelector('button[type="submit"]');
   setButtonBusy(submitButton, true, '查询中...');
   try {
-    state.records = await api(
-      `/api/charge-records?yy=${encodeURIComponent(yy)}&mm=${encodeURIComponent(mm)}`,
-    );
-    state.recordMonth = { yy, mm };
-    renderRecords();
-    renderDashboardStats();
+    await loadRecordsForMonth(yy, mm);
     showToast('记录已刷新');
   } catch (error) {
     showToast(error.message || '记录查询失败', true);
   } finally {
     setButtonBusy(submitButton, false, '查询记录');
+  }
+}
+
+async function applyRecordPreset(preset) {
+  const targetMonth = getRecordPresetMonth(preset);
+  if (!targetMonth) {
+    return;
+  }
+
+  elements.recordsYear.value = targetMonth.yy;
+  elements.recordsMonth.value = targetMonth.mm;
+
+  try {
+    await loadRecordsForMonth(targetMonth.yy, targetMonth.mm);
+    showToast('记录已切换');
+  } catch (error) {
+    showToast(error.message || '记录查询失败', true);
   }
 }
 
@@ -992,7 +1020,12 @@ function renderChargeUtility() {
 
 function renderRecords() {
   const records = Array.isArray(state.records) ? state.records : [];
+  const summary = summarizeRecords(records);
+
   elements.recordsList.innerHTML = '';
+  elements.recordsSummary.innerHTML = '';
+  renderRecordSummary(summary);
+  syncRecordPresetButtons();
 
   if (records.length === 0) {
     const emptyCard = document.createElement('article');
@@ -1017,6 +1050,37 @@ function renderRecords() {
     }
     card.appendChild(grid);
     elements.recordsList.appendChild(card);
+  });
+}
+
+function renderRecordSummary(summary) {
+  const items = [
+    {
+      label: '查询月份',
+      value: `${state.recordMonth.yy}-${state.recordMonth.mm}`,
+      caption: `共 ${summary.count} 条记录`,
+    },
+    {
+      label: '费用合计',
+      value: summary.totalPriceText,
+      caption: '按当前月份记录汇总',
+    },
+    {
+      label: '用电量',
+      value: summary.totalQuantityText,
+      caption: '仅统计可识别的数值',
+    },
+  ];
+
+  items.forEach((item) => {
+    const card = document.createElement('article');
+    card.className = 'record-summary-card';
+    card.innerHTML = `
+      <div class="record-summary-label">${escapeHtml(item.label)}</div>
+      <div class="record-summary-value">${escapeHtml(item.value)}</div>
+      <div class="record-summary-caption">${escapeHtml(item.caption)}</div>
+    `;
+    elements.recordsSummary.appendChild(card);
   });
 }
 
@@ -1215,6 +1279,121 @@ function renderDefinitionList(container, rows) {
     row.appendChild(valueElement);
     container.appendChild(row);
   });
+}
+
+function summarizeRecords(records) {
+  const safeRecords = Array.isArray(records) ? records : [];
+  let totalPrice = 0;
+  let totalQuantity = 0;
+  let hasPrice = false;
+  let hasQuantity = false;
+
+  safeRecords.forEach((record) => {
+    const price = extractRecordMetric(record, ['price', 'money', 'amount', 'fee', '费用', '金额']);
+    const quantity = extractRecordMetric(record, ['quantity', 'power', '电量', '用电']);
+
+    if (price != null) {
+      totalPrice += price;
+      hasPrice = true;
+    }
+
+    if (quantity != null) {
+      totalQuantity += quantity;
+      hasQuantity = true;
+    }
+  });
+
+  return {
+    count: safeRecords.length,
+    totalPriceText: hasPrice ? `${formatDecimal(totalPrice)} 元` : '-',
+    totalQuantityText: hasQuantity ? `${formatDecimal(totalQuantity)} 度` : '-',
+  };
+}
+
+function extractRecordMetric(record, keyTokens) {
+  if (!record || typeof record !== 'object') {
+    return null;
+  }
+
+  const entries = Object.entries(record);
+  for (const [key, value] of entries) {
+    const keyText = String(key || '').toLowerCase();
+    const matched = keyTokens.some((token) =>
+      keyText.includes(String(token).toLowerCase()),
+    );
+    if (!matched) {
+      continue;
+    }
+
+    const parsed = parseEmbeddedNumber(value);
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function parseEmbeddedNumber(value) {
+  const match = String(value ?? '')
+    .replaceAll(',', '')
+    .match(/-?\d+(?:\.\d+)?/u);
+
+  if (!match) {
+    return null;
+  }
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatDecimal(value) {
+  return Number(value).toFixed(Math.abs(value) >= 10 ? 1 : 2).replace(/\.0$/u, '');
+}
+
+function syncRecordPresetButtons() {
+  const activePreset = detectRecordPreset(state.recordMonth);
+  elements.recordPresetButtons.forEach((button) => {
+    button.classList.toggle(
+      'chip-active',
+      button.getAttribute('data-record-preset') === activePreset,
+    );
+  });
+}
+
+function detectRecordPreset(month) {
+  if (isSameMonth(month, getRelativeMonth(0))) {
+    return 'current';
+  }
+  if (isSameMonth(month, getRelativeMonth(-1))) {
+    return 'previous';
+  }
+  return '';
+}
+
+function getRecordPresetMonth(preset) {
+  if (preset === 'current') {
+    return getRelativeMonth(0);
+  }
+  if (preset === 'previous') {
+    return getRelativeMonth(-1);
+  }
+  return null;
+}
+
+function getRelativeMonth(offset) {
+  const now = new Date();
+  now.setDate(1);
+  now.setMonth(now.getMonth() + offset);
+  return {
+    yy: String(now.getFullYear()),
+    mm: String(now.getMonth() + 1).padStart(2, '0'),
+  };
+}
+
+function isSameMonth(left, right) {
+  return String(left?.yy || '') === String(right?.yy || '') &&
+    String(left?.mm || '') === String(right?.mm || '');
 }
 
 function buildRecordRow(key, value) {
