@@ -54,7 +54,10 @@ function captureElements() {
     refreshChargeStatus: document.getElementById('refresh-charge-status'),
     chargeForm: document.getElementById('charge-form'),
     chargeQrcode: document.getElementById('charge-qrcode'),
-    scanTrigger: document.getElementById('scan-trigger'),
+    scanTriggers: document.querySelectorAll('[data-scan-trigger]'),
+    focusChargeInput: document.getElementById('focus-charge-input'),
+    chargeQuickMeta: document.getElementById('charge-quick-meta'),
+    chargeContextNote: document.getElementById('charge-context-note'),
     payForm: document.getElementById('pay-form'),
     payAmount: document.getElementById('pay-amount'),
     paymentLaunch: document.getElementById('payment-launch'),
@@ -75,10 +78,13 @@ function captureElements() {
     chargeListRaw: document.getElementById('charge-list-raw'),
     stationNote: document.getElementById('station-note'),
     stationSummary: document.getElementById('station-summary'),
+    stationResultsMeta: document.getElementById('station-results-meta'),
     stationSearch: document.getElementById('station-search'),
     stationGrid: document.getElementById('station-grid'),
     refreshOverview: document.getElementById('refresh-overview'),
     refreshStations: document.getElementById('refresh-stations'),
+    stationAvailableShortcut: document.getElementById('station-available-shortcut'),
+    stationResetFilters: document.getElementById('station-reset-filters'),
     expandStations: document.getElementById('expand-stations'),
     collapseStations: document.getElementById('collapse-stations'),
     messageRaw: document.getElementById('message-raw'),
@@ -102,7 +108,10 @@ function bindEvents() {
   elements.refreshAccount.addEventListener('click', () => loadAccount(true));
   elements.refreshChargeStatus.addEventListener('click', () => loadChargeStatus(true));
   elements.chargeForm.addEventListener('submit', handleChargeSubmit);
-  elements.scanTrigger.addEventListener('click', openScanner);
+  elements.scanTriggers.forEach((button) => {
+    button.addEventListener('click', openScanner);
+  });
+  elements.focusChargeInput.addEventListener('click', focusChargeInput);
   elements.payForm.addEventListener('submit', handlePaySubmit);
   elements.paymentOpen.addEventListener('click', openPaymentLink);
   elements.paymentRefresh.addEventListener('click', refreshAfterPayment);
@@ -113,6 +122,12 @@ function bindEvents() {
   elements.fetchMessage.addEventListener('click', () => loadMessage(true));
   elements.refreshOverview.addEventListener('click', refreshOverview);
   elements.refreshStations.addEventListener('click', () => loadStations(true));
+  elements.stationAvailableShortcut.addEventListener('click', () => {
+    state.stationFilter = 'available';
+    syncStationFilterButtons();
+    renderStations();
+  });
+  elements.stationResetFilters.addEventListener('click', resetStationFilters);
   elements.expandStations.addEventListener('click', expandAllStations);
   elements.collapseStations.addEventListener('click', collapseAllStations);
   elements.stationSearch.addEventListener('input', (event) => {
@@ -271,6 +286,20 @@ async function refreshOverview() {
   } finally {
     setButtonBusy(elements.refreshOverview, false, '刷新总览');
   }
+}
+
+function focusChargeInput() {
+  elements.chargeQrcode.focus();
+  elements.chargeQrcode.select();
+  scrollToSection('charge-section');
+}
+
+function resetStationFilters() {
+  state.stationQuery = '';
+  state.stationFilter = 'all';
+  elements.stationSearch.value = '';
+  syncStationFilterButtons();
+  renderStations();
 }
 
 async function loadAccount(withToast = false) {
@@ -800,6 +829,7 @@ function render() {
   renderDashboardStats();
   renderAccount();
   renderChargeStatus();
+  renderChargeUtility();
   renderRecords();
   renderAdvanced();
   renderPayment();
@@ -908,6 +938,58 @@ function renderChargeStatus() {
   ]);
 }
 
+function renderChargeUtility() {
+  const quickItems = [];
+  const balance = state.account?.acbalance;
+  const status = state.chargeStatus;
+
+  if (balance) {
+    quickItems.push({
+      label: '余额',
+      value: balance,
+      tone: 'accent',
+    });
+  }
+
+  if (status && Object.keys(status).length) {
+    quickItems.push({
+      label: '当前状态',
+      value: status.chargestatus || '进行中',
+      tone: 'teal',
+    });
+    if (status.position) {
+      quickItems.push({
+        label: '设备位置',
+        value: status.position,
+        tone: 'neutral',
+      });
+    }
+  } else {
+    quickItems.push({
+      label: '当前状态',
+      value: '暂无充电',
+      tone: 'neutral',
+    });
+  }
+
+  const supportsScanner = Boolean(
+    navigator.mediaDevices?.getUserMedia && 'BarcodeDetector' in window,
+  );
+  elements.chargeContextNote.textContent = supportsScanner
+    ? '当前浏览器支持扫码，建议到设备旁后直接打开相机；识别失败时再手动输入后 8 位。'
+    : '当前浏览器可能无法直接识别条码，建议优先手动输入二维码后 8 位，或换到支持扫码的浏览器。';
+
+  elements.chargeQuickMeta.innerHTML = quickItems
+    .map(
+      (item) => `
+        <div class="charge-meta-pill charge-meta-${escapeHtml(item.tone || 'neutral')}">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.value)}</strong>
+        </div>`,
+    )
+    .join('');
+}
+
 function renderRecords() {
   const records = Array.isArray(state.records) ? state.records : [];
   elements.recordsList.innerHTML = '';
@@ -977,6 +1059,7 @@ function renderStations() {
 
   if (!overview) {
     elements.stationNote.textContent = '地点状态尚未加载。';
+    elements.stationResultsMeta.textContent = '还没有地点数据，稍后可点“刷新地点状态”再试。';
     return;
   }
 
@@ -1035,6 +1118,12 @@ function renderStations() {
       return true;
     })
     .sort(compareStations);
+
+  elements.stationResultsMeta.textContent = buildStationResultsMeta(
+    filtered,
+    locations.length,
+    availableLocations,
+  );
 
   if (filtered.length === 0) {
     const empty = document.createElement('article');
@@ -1191,6 +1280,29 @@ function getStationRank(item) {
       return 3;
     default:
       return 4;
+  }
+}
+
+function buildStationResultsMeta(filtered, totalCount, availableCount) {
+  const visibleCount = Array.isArray(filtered) ? filtered.length : 0;
+  const queryText = state.stationQuery ? `搜索“${state.stationQuery}”` : '';
+  const filterText = getStationFilterLabel(state.stationFilter);
+  const prefix = queryText ? `${queryText}，` : '';
+
+  return `${prefix}${filterText}下显示 ${visibleCount}/${totalCount || 0} 个地点，可充电地点共 ${availableCount} 个。`;
+}
+
+function getStationFilterLabel(filter) {
+  switch (filter) {
+    case 'available':
+      return '可充电筛选';
+    case 'busy':
+      return '无空闲筛选';
+    case 'fault':
+      return '异常筛选';
+    case 'all':
+    default:
+      return '全部地点';
   }
 }
 

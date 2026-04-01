@@ -289,6 +289,33 @@
               <p class="panel-note">
                 到现场后，优先直接扫码；浏览器不支持扫码时，再手动输入二维码后 8 位。
               </p>
+              <div class="charge-focus-card">
+                <div class="charge-focus-copy">
+                  <p class="panel-kicker">到场后建议</p>
+                  <h3>先扫码，再手输，尽量少折返。</h3>
+                  <p id="charge-context-note" class="panel-note">
+                    如果当前浏览器支持相机和条码识别，优先直接扫码；否则保留手动输入作为兜底。
+                  </p>
+                </div>
+                <div class="charge-focus-actions">
+                  <button
+                    id="scan-trigger-hero"
+                    class="button button-primary charge-scan-button"
+                    data-scan-trigger
+                    type="button"
+                  >
+                    立即扫码
+                  </button>
+                  <button
+                    id="focus-charge-input"
+                    class="button button-secondary charge-manual-button"
+                    type="button"
+                  >
+                    手动输入编号
+                  </button>
+                </div>
+                <div id="charge-quick-meta" class="charge-quick-meta"></div>
+              </div>
               <form id="charge-form" class="form-stack">
                 <label class="field">
                   <span>二维码后 8 位</span>
@@ -303,7 +330,12 @@
                 </label>
                 <div class="toolbar toolbar-wrap">
                   <button class="button button-primary" type="submit">开始充电</button>
-                  <button id="scan-trigger" class="button button-secondary" type="button">
+                  <button
+                    id="scan-trigger"
+                    class="button button-secondary"
+                    data-scan-trigger
+                    type="button"
+                  >
                     打开扫码
                   </button>
                 </div>
@@ -512,6 +544,27 @@
           <p id="station-note" class="panel-note">
             这里会展示所有地点和逐桩状态，默认按地点折叠，方便手机上快速浏览。
           </p>
+          <div class="station-results-bar">
+            <div id="station-results-meta" class="station-results-meta">
+              支持搜索地点名、按状态筛选，并快速切到可充电地点。
+            </div>
+            <div class="station-results-actions">
+              <button
+                id="station-available-shortcut"
+                class="button button-secondary button-small"
+                type="button"
+              >
+                只看可充电
+              </button>
+              <button
+                id="station-reset-filters"
+                class="button button-secondary button-small"
+                type="button"
+              >
+                清空筛选
+              </button>
+            </div>
+          </div>
           <div id="station-summary" class="station-summary"></div>
           <div class="station-toolbar">
             <label class="field station-search">
