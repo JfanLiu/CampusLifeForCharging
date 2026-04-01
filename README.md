@@ -1,17 +1,24 @@
 # CampusLifeForCharging
 
-给平时主用苹果手机的用户提供一个更方便的校园充电网页入口。
+本项目为平时主用 iPhone 的用户提供了一个轻量级的校园充电网页入口，**让你在日常充电时免于携带备用的安卓手机**，只需偶尔使用安卓设备完成充值即可轻松搞定校园充电。
+
+## 项目背景
+
+由于“校园生活”官方 App 尚未在苹果 App Store 上架，导致广大的 iPhone 用户面临一个非常尴尬的局面：难以直接使用手机操控校园内的充电桩。在此之前，苹果手机用户如果想要充电，往往不得不每天随身多携带一台安卓手机，或者费力折腾安卓模拟器，这给日常的校园出行带来了极大的不便。
+
+本项目正是为了解决这一痛点而生，通过在网页端复刻核心的充电功能，将 iPhone 用户从“被迫双持”的麻烦中解放出来。
 
 ## 使用方式
 
-1. 先准备一台安卓手机，安装官方 App，在官方 App 里注册账号并完成充值。
-2. 对于平时主用 iPhone、又不想随身带安卓手机的用户，可以直接用苹果手机浏览器访问你部署好的服务网址。
-3. 在网页里完成日常使用：登录、查看状态、扫码或输入编号发起充电。
-4. 充值仍回到官方 App 完成。
+整体逻辑为：**安卓端管资金，网页端管日常**。
+
+1. **初次注册与充值**：先准备一台安卓手机（或使用安卓模拟器），安装“校园生活”官方 App，在里面完成账号注册和首次充值。
+2. **日常无忧充电**：平时出门只需带上你的 iPhone！直接使用苹果手机浏览器访问你部署好的服务网址，即可在网页里完成日常操作：登录、查看状态和余额、扫码或输入编号发起充电。
+3. **偶尔充值**：当账户余额不足时，再回到安卓设备上的官方 App 完成充值即可。
 
 ## 部署
 
-需要 Node.js 18+。
+需要 Node.js 18+ 环境。
 
 ```sh
 npm install
@@ -19,13 +26,13 @@ cp .env.example .env
 npm start
 ```
 
-默认访问地址是 `http://127.0.0.1:8787`。如果需要公网访问，把 `.env` 里的 `HOST` 改成 `0.0.0.0`。
+默认访问地址是 `http://127.0.0.1:8787`。如果需要公网访问，请把 `.env` 文件里的 `HOST` 修改为 `0.0.0.0`。
 
 ## 反馈
 
-- 源码仓库：<https://github.com/JfanLiu/CampusLifeForCharging>
-- 问题反馈：<https://github.com/JfanLiu/CampusLifeForCharging/issues>
+- 源码仓库：[https://github.com/JfanLiu/CampusLifeForCharging](https://github.com/JfanLiu/CampusLifeForCharging)
+- 问题反馈：[https://github.com/JfanLiu/CampusLifeForCharging/issues](https://github.com/JfanLiu/CampusLifeForCharging/issues)
 
 ## 参考项目
 
-- AltCampusLife: <https://github.com/creeper12356/AltCampusLife>
+- AltCampusLife: [https://github.com/creeper12356/AltCampusLife](https://github.com/creeper12356/AltCampusLife)
