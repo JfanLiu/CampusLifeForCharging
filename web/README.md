@@ -51,7 +51,8 @@ npm run web:install
 npm run web:start
 ```
 
-默认监听 `http://0.0.0.0:8787`。
+默认本机开发地址是 `http://127.0.0.1:8787`。
+如果要让服务器对外提供访问，可将 `HOST` 配成 `0.0.0.0`。
 
 ## 常用脚本
 
@@ -65,7 +66,7 @@ npm run web:start
 
 | Key | Default | Notes |
 | --- | --- | --- |
-| `HOST` | `0.0.0.0` | HTTP 监听地址 |
+| `HOST` | `127.0.0.1` | HTTP 监听地址；如果要让服务器对外提供访问，可改成 `0.0.0.0` |
 | `PORT` | `8787` | HTTP 监听端口 |
 | `SESSION_TTL_MS` | `604800000` | 会话 TTL，默认 7 天 |
 | `SESSION_PERSIST_ENABLED` | `true` | 是否把会话落盘 |

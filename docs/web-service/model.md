@@ -308,7 +308,7 @@
 
 | Field | Type | Required | Constraints | Notes |
 | --- | --- | --- | --- | --- |
-| `HOST` | string | 否 | 非空 | HTTP 监听地址 |
+| `HOST` | string | 否 | 非空 | HTTP 监听地址，默认 `127.0.0.1`，对外暴露时可改为 `0.0.0.0` |
 | `PORT` | number | 否 | 正整数 | HTTP 监听端口 |
 | `SESSION_COOKIE` | string | 否 | 非空 | Cookie 名称 |
 | `SESSION_TTL_MS` | number | 否 | 正整数 | 会话过期毫秒数 |

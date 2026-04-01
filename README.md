@@ -33,7 +33,7 @@ npm run web:install
 npm run web:start
 ```
 
-默认会在 `http://localhost:8787` 启动 Web 服务。
+默认会在 `http://127.0.0.1:8787` 启动 Web 服务。
 也可以直接进入 `web/` 目录运行；独立说明见 `web/README.md`。
 
 #### 部署说明
@@ -41,6 +41,7 @@ npm run web:start
 - Node 服务会同时提供静态前端页面和 `/api/*` 代理接口
 - 生产环境建议通过 Nginx / Caddy 反向代理到该 Node 进程，并启用 HTTPS
 - `web/.env.example` 提供了独立运行时配置模板，服务会自动读取 `web/.env`
+- 本机开发默认监听 `127.0.0.1`；如果需要对外暴露端口，可将 `HOST` 配成 `0.0.0.0`
 - 当前会话默认会持久化到 `web/data/sessions.json`，服务重启后会自动恢复未过期会话
 
 #### 功能覆盖

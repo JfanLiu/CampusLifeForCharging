@@ -392,7 +392,8 @@ const server = http.createServer(async (req, res) => {
 registerShutdownHooks();
 
 server.listen(PORT, HOST, () => {
-  console.log(`${APP_NAME} listening on http://${HOST}:${PORT}`);
+  const displayHost = HOST === '0.0.0.0' || HOST === '::' ? '127.0.0.1' : HOST;
+  console.log(`${APP_NAME} listening on http://${displayHost}:${PORT}`);
 });
 
 function registerShutdownHooks() {

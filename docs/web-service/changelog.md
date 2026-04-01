@@ -27,3 +27,8 @@
 - Summary: 将 Web 收口为单仓库中的独立子项目
 - Touchpoints: `web/.env.example`, `web/.gitignore`, `web/README.md`, `web/server/config.js`, `web/server/sessionStore.js`, `web/server/index.js`, `web/package.json`, `package.json`, `README.md`, `docs/web-service/*`
 - Behavior: 新增独立运行配置模板、文件持久化会话、健康检查接口、根目录快捷脚本和独立部署文档，Web 服务重启后可恢复未过期会话
+
+- Date: 2026-04-01
+- Summary: 调整 Web 本机开发默认监听地址
+- Touchpoints: `web/server/config.js`, `web/.env.example`, `web/README.md`, `README.md`, `docs/web-service/model.md`
+- Behavior: 将默认 `HOST` 从 `0.0.0.0` 改为 `127.0.0.1`，避免本机开发时输出不可直接访问的地址；服务器部署如需对外监听可显式配置回 `0.0.0.0`

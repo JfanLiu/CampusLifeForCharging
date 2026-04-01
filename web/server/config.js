@@ -10,7 +10,7 @@ const UPSTREAM_BASE =
 
 module.exports = {
   APP_NAME: process.env.APP_NAME || 'AltCampusLife Web',
-  HOST: process.env.HOST || '0.0.0.0',
+  HOST: process.env.HOST || '127.0.0.1',
   PORT: readNumber('PORT', 8787),
   PUBLIC_DIR: process.env.PUBLIC_DIR || 'public',
   LOGIN_URL:
