@@ -8,6 +8,14 @@
 
 本项目正是为了解决这一痛点而生，通过在网页端复刻核心的充电功能，将 iPhone 用户从“被迫双持”的麻烦中解放出来。
 
+## 页面预览
+
+以下为主要页面的预览图。README 中展示的是便于浏览的总览图，点击下方链接可以查看对应的高清长图。
+
+![CampusLifeForCharging 页面预览](./assets/screenshots/overview.webp)
+
+完整截图：[登录](./assets/screenshots/login.webp) / [仪表盘](./assets/screenshots/dashboard.webp) / [充电桩状态](./assets/screenshots/charger-status.webp) / [开始充电](./assets/screenshots/start-charging.webp) / [充电记录](./assets/screenshots/charge-records.webp) / [更多](./assets/screenshots/more.webp)
+
 ## 使用方式
 
 整体逻辑为：**安卓端管资金，网页端管日常**。
