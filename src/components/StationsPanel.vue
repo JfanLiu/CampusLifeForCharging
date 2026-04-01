@@ -31,6 +31,15 @@ const emit = defineEmits<{
 function updateQuery(event: Event) {
   emit('update:query', (event.target as HTMLInputElement).value);
 }
+
+function formatStationSummaryLine(item: StationCardModel) {
+  return [
+    `空闲 ${item.freeCount ?? 0}`,
+    `充电中 ${item.chargingCount ?? 0}`,
+    `异常 ${item.errorCount ?? 0}`,
+    `总计 ${item.totalCount ?? 0}`,
+  ].join(' · ');
+}
 </script>
 
 <template>
@@ -144,54 +153,41 @@ function updateQuery(event: Event) {
             @click="emit('selectStation', item.id)"
           >
             <div class="station-list-main">
-              <div class="station-list-title">
-                <h3>{{ item.rname || '未命名地点' }}</h3>
-                <p class="muted">地点编号 {{ item.rid || '-' }}</p>
-              </div>
+              <h3>{{ item.rname || '未命名地点' }}</h3>
               <span class="status-pill" :class="`status-${item.statusCode || 'unknown'}`">
                 {{ item.statusLabel || '状态未知' }}
               </span>
             </div>
-            <div class="station-list-preview">{{ item.previewText }}</div>
-            <div class="station-row-meta">
-              <span class="meta-pill">空闲 {{ item.freeCount ?? 0 }}</span>
-              <span class="meta-pill">充电中 {{ item.chargingCount ?? 0 }}</span>
-              <span class="meta-pill">异常 {{ item.errorCount ?? 0 }}</span>
-              <span class="meta-pill">总计 {{ item.totalCount ?? 0 }}</span>
-            </div>
-            <span class="station-row-arrow">查看逐桩详情</span>
+            <p class="station-summary-line">{{ formatStationSummaryLine(item) }}</p>
           </button>
         </template>
       </div>
 
       <div class="station-detail-panel">
-        <article v-if="selectedStation" class="station-detail-card" :class="`status-${selectedStation.statusCode || 'unknown'}`">
-          <div class="station-detail-head">
-            <div class="station-detail-title">
-              <button
-                v-if="mobileLayout"
-                class="button button-secondary button-small station-detail-back"
-                type="button"
-                @click="emit('clearSelection')"
-              >
-                返回地点列表
-              </button>
-              <p class="panel-kicker">地点详情</p>
+        <article
+          v-if="selectedStation"
+          class="station-detail-card"
+          :class="`status-${selectedStation.statusCode || 'unknown'}`"
+        >
+          <div class="station-detail-title">
+            <button
+              v-if="mobileLayout"
+              class="button button-secondary button-small station-detail-back"
+              type="button"
+              @click="emit('clearSelection')"
+            >
+              返回地点列表
+            </button>
+            <p class="panel-kicker">地点详情</p>
+            <div class="station-detail-head">
               <h3>{{ selectedStation.rname || '未命名地点' }}</h3>
-              <p class="muted">
-                地点编号 {{ selectedStation.rid || '-' }} · {{ selectedStation.previewText }}
-              </p>
+              <span class="status-pill" :class="`status-${selectedStation.statusCode || 'unknown'}`">
+                {{ selectedStation.statusLabel || '状态未知' }}
+              </span>
             </div>
-            <span class="status-pill" :class="`status-${selectedStation.statusCode || 'unknown'}`">
-              {{ selectedStation.statusLabel || '状态未知' }}
-            </span>
-          </div>
-
-          <div class="station-meta station-meta-detail">
-            <span class="meta-pill">空闲 {{ selectedStation.freeCount ?? 0 }}</span>
-            <span class="meta-pill">充电中 {{ selectedStation.chargingCount ?? 0 }}</span>
-            <span class="meta-pill">异常 {{ selectedStation.errorCount ?? 0 }}</span>
-            <span class="meta-pill">总计 {{ selectedStation.totalCount ?? 0 }}</span>
+            <p class="station-summary-line station-summary-line-detail">
+              {{ formatStationSummaryLine(selectedStation) }}
+            </p>
           </div>
 
           <div class="station-detail-piles">
@@ -207,9 +203,10 @@ function updateQuery(event: Event) {
               >
                 <div class="pile-detail-top">
                   <div class="pile-name">{{ pile.name || '未命名充电桩' }}</div>
-                  <div class="pile-status">{{ pile.statusLabel || pile.status || '状态未知' }}</div>
                 </div>
-                <p v-if="pile.note" class="pile-note">{{ pile.note }}</p>
+                <p class="pile-note">
+                  {{ pile.note || pile.statusLabel || pile.status || '状态未知' }}
+                </p>
               </article>
             </template>
           </div>

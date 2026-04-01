@@ -116,12 +116,10 @@ function sectionHidden(tab: MobileTab): boolean {
 
 function handleSelectStation(stationId: string) {
   selectStation(stationId);
-  scrollToSection('stations-section');
 }
 
 function handleClearStationSelection() {
   clearStationSelection();
-  scrollToSection('stations-section');
 }
 
 function scrollToSection(targetId: string) {
