@@ -1036,19 +1036,22 @@ function renderRecords() {
   }
 
   records.forEach((record, index) => {
+    const cardData = buildRecordCardModel(record, index);
     const card = document.createElement('article');
-    card.className = 'record-card';
-
-    const title = document.createElement('h3');
-    title.textContent = record.position || record.bgtime || `记录 ${index + 1}`;
-    card.appendChild(title);
-
-    const grid = document.createElement('div');
-    grid.className = 'record-grid';
-    for (const [key, value] of Object.entries(record)) {
-      grid.appendChild(buildRecordRow(key, value));
-    }
-    card.appendChild(grid);
+    card.className = `record-card record-tone-${cardData.tone}`;
+    card.innerHTML = `
+      <div class="record-card-head">
+        <div class="record-time-badge">${escapeHtml(cardData.timeText)}</div>
+        ${cardData.statusText
+          ? `<span class="record-status-chip record-status-${escapeHtml(cardData.tone)}">${escapeHtml(cardData.statusText)}</span>`
+          : ''}
+      </div>
+      <h3>${escapeHtml(cardData.title)}</h3>
+      <p class="record-subtitle">${escapeHtml(cardData.subtitle)}</p>
+      ${buildRecordHighlightsMarkup(cardData.highlights)}
+      ${buildRecordFactsMarkup(cardData.facts)}
+      ${buildRecordDisclosureMarkup(cardData.extraRows)}
+    `;
     elements.recordsList.appendChild(card);
   });
 }
@@ -1082,6 +1085,206 @@ function renderRecordSummary(summary) {
     `;
     elements.recordsSummary.appendChild(card);
   });
+}
+
+function buildRecordCardModel(record, index) {
+  const usedKeys = new Set();
+  const startTime = consumeRecordField(record, usedKeys, [
+    'bgtime',
+    'begintime',
+    'starttime',
+    'start',
+    '开始时间',
+  ]);
+  const endTime = consumeRecordField(record, usedKeys, [
+    'edtime',
+    'endtime',
+    'stoptime',
+    'end',
+    '结束时间',
+  ]);
+  const position = consumeRecordField(record, usedKeys, [
+    'position',
+    'place',
+    'location',
+    'addr',
+    '地点',
+    '位置',
+    '房间',
+  ]);
+  const status = consumeRecordField(record, usedKeys, ['chargestatus', 'status', '状态']);
+  const price = consumeRecordField(record, usedKeys, [
+    'price',
+    'money',
+    'amount',
+    'fee',
+    '费用',
+    '金额',
+  ]);
+  const quantity = consumeRecordField(record, usedKeys, [
+    'quantity',
+    'power',
+    'electricity',
+    '电量',
+    '用电',
+  ]);
+  const duration = consumeRecordField(record, usedKeys, ['duration', '时长']);
+  const device = consumeRecordField(record, usedKeys, [
+    'jacountname',
+    'jacountno',
+    'device',
+    'meter',
+    '电表',
+    '设备',
+  ]);
+  const pile = consumeRecordField(record, usedKeys, [
+    'qrcode',
+    'pile',
+    'charger',
+    'terminal',
+    '桩',
+    '枪',
+  ]);
+  const order = consumeRecordField(record, usedKeys, [
+    'orderno',
+    'orderid',
+    'serial',
+    '流水',
+    '订单',
+  ]);
+
+  const title = position?.value || device?.value || startTime?.value || `记录 ${index + 1}`;
+  const subtitleParts = [];
+  if (startTime?.value) {
+    subtitleParts.push(`开始 ${startTime.value}`);
+  }
+  if (endTime?.value) {
+    subtitleParts.push(`结束 ${endTime.value}`);
+  }
+  if (position?.value && title !== position.value) {
+    subtitleParts.push(position.value);
+  }
+
+  const highlights = [
+    buildRecordHighlight('费用', price?.value, 'accent'),
+    buildRecordHighlight('电量', quantity?.value, 'teal'),
+    buildRecordHighlight('时长', duration?.value, 'neutral'),
+  ].filter(Boolean);
+
+  const facts = [
+    buildRecordFact('设备', device?.value),
+    buildRecordFact('充电桩', pile?.value),
+    buildRecordFact('订单', order?.value),
+    buildRecordFact('结束时间', endTime?.value && !subtitleParts.includes(`结束 ${endTime.value}`) ? endTime.value : ''),
+  ].filter(Boolean);
+
+  const extraRows = Object.entries(record || {})
+    .filter(([key]) => !usedKeys.has(key))
+    .map(([key, value]) => ({
+      label: key,
+      value: value == null ? '-' : String(value),
+    }));
+
+  if (!facts.length && extraRows.length > 0) {
+    facts.push(...extraRows.splice(0, 2));
+  }
+
+  return {
+    title,
+    subtitle: subtitleParts.join(' · ') || '查看这次充电的详细字段',
+    timeText: startTime?.value || `第 ${index + 1} 条`,
+    statusText: status?.value || '',
+    tone: getRecordTone(status?.value),
+    highlights,
+    facts,
+    extraRows,
+  };
+}
+
+function buildRecordHighlight(label, value, tone) {
+  if (!value) {
+    return null;
+  }
+
+  return {
+    label,
+    value: String(value),
+    tone,
+  };
+}
+
+function buildRecordFact(label, value) {
+  if (!value) {
+    return null;
+  }
+
+  return {
+    label,
+    value: String(value),
+  };
+}
+
+function buildRecordHighlightsMarkup(highlights) {
+  if (!Array.isArray(highlights) || highlights.length === 0) {
+    return '';
+  }
+
+  return `
+    <div class="record-highlight-row">
+      ${highlights
+        .map(
+          (item) => `
+            <div class="record-highlight record-highlight-${escapeHtml(item.tone || 'neutral')}">
+              <span>${escapeHtml(item.label)}</span>
+              <strong>${escapeHtml(item.value)}</strong>
+            </div>`,
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+function buildRecordFactsMarkup(facts) {
+  if (!Array.isArray(facts) || facts.length === 0) {
+    return '';
+  }
+
+  return `
+    <div class="record-fact-grid">
+      ${facts
+        .map(
+          (item) => `
+            <div class="record-fact">
+              <div class="record-fact-label">${escapeHtml(item.label)}</div>
+              <div class="record-fact-value">${escapeHtml(item.value)}</div>
+            </div>`,
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+function buildRecordDisclosureMarkup(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return '';
+  }
+
+  return `
+    <details class="record-disclosure">
+      <summary>展开全部字段</summary>
+      <div class="record-grid">
+        ${rows
+          .map(
+            (row) => `
+              <div class="definition-row">
+                <div class="definition-term">${escapeHtml(row.label)}</div>
+                <div class="definition-value">${escapeHtml(row.value || '-')}</div>
+              </div>`,
+          )
+          .join('')}
+      </div>
+    </details>
+  `;
 }
 
 function renderAdvanced() {
@@ -1279,6 +1482,69 @@ function renderDefinitionList(container, rows) {
     row.appendChild(valueElement);
     container.appendChild(row);
   });
+}
+
+function consumeRecordField(record, usedKeys, candidates) {
+  const entries = Object.entries(record || {});
+
+  for (const candidate of candidates) {
+    const match = entries.find(
+      ([key, value]) =>
+        !usedKeys.has(key) &&
+        value != null &&
+        String(value).trim() !== '' &&
+        matchRecordKey(key, candidate),
+    );
+
+    if (!match) {
+      continue;
+    }
+
+    const [key, value] = match;
+    usedKeys.add(key);
+    return {
+      key,
+      value: String(value),
+    };
+  }
+
+  return null;
+}
+
+function matchRecordKey(key, candidate) {
+  const normalizedKey = normalizeRecordKey(key);
+  const normalizedCandidate = normalizeRecordKey(candidate);
+  return (
+    normalizedKey === normalizedCandidate ||
+    normalizedKey.startsWith(normalizedCandidate) ||
+    normalizedKey.includes(normalizedCandidate)
+  );
+}
+
+function normalizeRecordKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/gu, '');
+}
+
+function getRecordTone(statusText) {
+  const value = String(statusText || '').toLowerCase();
+
+  if (!value) {
+    return 'neutral';
+  }
+  if (/完成|成功|结束|正常|finish|done|success/u.test(value)) {
+    return 'teal';
+  }
+  if (/异常|失败|中断|故障|取消|fault|fail|cancel/u.test(value)) {
+    return 'danger';
+  }
+  if (/充电|进行|等待|running|active|charging/u.test(value)) {
+    return 'accent';
+  }
+
+  return 'neutral';
 }
 
 function summarizeRecords(records) {
