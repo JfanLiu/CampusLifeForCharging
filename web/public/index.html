@@ -26,7 +26,7 @@
         </div>
       </header>
 
-      <section class="hero panel">
+      <section id="hero-section" class="hero panel" data-mobile-panel="welcome">
         <div class="hero-copy-block">
           <p class="eyebrow">Mobile-First Utility Portal</p>
           <h2>先把手机浏览器里真正常用的动作做好。</h2>
@@ -60,7 +60,7 @@
       </section>
 
       <main class="main-stack">
-        <section id="login-view" class="panel auth-panel">
+        <section id="login-view" class="panel auth-panel" data-mobile-panel="login">
           <div class="login-layout">
             <div>
               <div class="panel-head">
@@ -121,7 +121,7 @@
         </section>
 
         <section id="dashboard-view" class="dashboard hidden">
-          <section class="panel overview-panel">
+          <section class="panel overview-panel" data-mobile-panel="overview">
             <div class="overview-shell">
               <div class="profile-card">
                 <div class="profile-meta">
@@ -137,17 +137,117 @@
                 <a class="button button-secondary" href="#records-section">查看记录</a>
                 <a class="button button-secondary" href="#stations-section">地点状态</a>
                 <a class="button button-secondary" href="#tools-section">高级工具</a>
-                <button id="logout-button" class="button button-danger" type="button">
+                <button
+                  id="logout-button"
+                  class="button button-danger"
+                  data-logout-trigger
+                  type="button"
+                >
                   退出登录
                 </button>
               </div>
+            </div>
+
+            <div class="overview-quick-grid">
+              <button id="refresh-overview" class="overview-quick-action" type="button">
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>刷新总览</strong>
+                  <span>余额、状态一起更新</span>
+                </span>
+              </button>
+              <button
+                class="overview-quick-action"
+                data-mobile-nav-jump="charge"
+                data-mobile-nav-target="charge-section"
+                type="button"
+              >
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M13 2 6 13h5l-1 9 8-12h-5l0-8Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>快速充电</strong>
+                  <span>直接去输入编号或扫码</span>
+                </span>
+              </button>
+              <button
+                class="overview-quick-action"
+                data-mobile-nav-jump="records"
+                data-mobile-nav-target="records-section"
+                type="button"
+              >
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M7 3h8l4 4v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                    <path
+                      d="M15 3v5h5M9 12h6M9 16h6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>本月记录</strong>
+                  <span>快速查看最近充电情况</span>
+                </span>
+              </button>
+              <button
+                class="overview-quick-action"
+                data-mobile-nav-jump="stations"
+                data-mobile-nav-target="stations-section"
+                type="button"
+              >
+                <span class="overview-quick-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    />
+                    <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  </svg>
+                </span>
+                <span class="overview-quick-copy">
+                  <strong>空闲地点</strong>
+                  <span>马上看哪儿还有桩</span>
+                </span>
+              </button>
             </div>
 
             <div id="dashboard-stats" class="dashboard-stats"></div>
           </section>
 
           <div class="grid-two">
-            <section id="account-section" class="panel">
+            <section id="account-section" class="panel" data-mobile-panel="overview">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">账户</p>
@@ -160,7 +260,7 @@
               <div id="account-summary" class="definition-list"></div>
             </section>
 
-            <section id="charge-status-section" class="panel">
+            <section id="charge-status-section" class="panel" data-mobile-panel="overview">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">充电状态</p>
@@ -179,7 +279,7 @@
           </div>
 
           <div class="grid-two">
-            <section id="charge-section" class="panel panel-highlight">
+            <section id="charge-section" class="panel panel-highlight" data-mobile-panel="charge">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">充电</p>
@@ -213,7 +313,7 @@
               </p>
             </section>
 
-            <section id="recharge-section" class="panel">
+            <section id="recharge-section" class="panel" data-mobile-panel="charge">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">充值</p>
@@ -296,7 +396,7 @@
           </div>
 
           <div class="grid-two">
-            <section id="records-section" class="panel">
+            <section id="records-section" class="panel" data-mobile-panel="records">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">记录</p>
@@ -317,7 +417,7 @@
               <div id="records-list" class="record-list"></div>
             </section>
 
-            <section id="tools-section" class="panel">
+            <section id="tools-section" class="panel" data-mobile-panel="more">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">高级工具</p>
@@ -368,7 +468,7 @@
             </section>
           </div>
 
-          <section class="panel settings-panel">
+          <section class="panel settings-panel" data-mobile-panel="more">
             <div class="panel-head">
               <div>
                 <p class="panel-kicker">相关入口</p>
@@ -376,6 +476,9 @@
               </div>
             </div>
             <div class="toolbar toolbar-wrap">
+              <button class="button button-danger" data-logout-trigger type="button">
+                退出登录
+              </button>
               <a
                 class="button button-secondary"
                 href="https://github.com/creeper12356/AltCampusLife"
@@ -396,7 +499,7 @@
           </section>
         </section>
 
-        <section id="stations-section" class="panel station-panel">
+        <section id="stations-section" class="panel station-panel" data-mobile-panel="stations">
           <div class="panel-head panel-head-spread">
             <div>
               <p class="panel-kicker">地点总览</p>
@@ -451,6 +554,170 @@
           <div id="station-grid" class="station-grid"></div>
         </section>
       </main>
+
+      <nav id="mobile-guest-nav" class="mobile-nav" aria-label="移动端快速导航">
+        <button
+          class="mobile-nav-item mobile-nav-item-active"
+          data-mobile-nav="welcome"
+          data-mobile-nav-target="hero-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1v-8.5Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">首页</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="login"
+          data-mobile-nav-target="login-view"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 20a7 7 0 0 1 14 0"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">登录</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="stations"
+          data-mobile-nav-target="stations-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+              <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">地点</span>
+        </button>
+      </nav>
+
+      <nav id="mobile-auth-nav" class="mobile-nav hidden" aria-label="移动端功能导航">
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="overview"
+          data-mobile-nav-target="dashboard-view"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M4 5h7v6H4zM13 5h7v10h-7zM4 13h7v6H4zM13 17h7v2h-7z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">总览</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="charge"
+          data-mobile-nav-target="charge-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M13 2 6 13h5l-1 9 8-12h-5l0-8Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">充电</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="records"
+          data-mobile-nav-target="records-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M7 3h8l4 4v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+              <path
+                d="M15 3v5h5M9 12h6M9 16h6"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-width="1.8"
+              />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">记录</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="stations"
+          data-mobile-nav-target="stations-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 21s6-5.33 6-11a6 6 0 1 0-12 0c0 5.67 6 11 6 11Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+              />
+              <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">地点</span>
+        </button>
+        <button
+          class="mobile-nav-item"
+          data-mobile-nav="more"
+          data-mobile-nav-target="tools-section"
+          type="button"
+        >
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="6" cy="12" r="1.6" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+              <circle cx="18" cy="12" r="1.6" fill="currentColor" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">更多</span>
+        </button>
+      </nav>
     </div>
 
     <div id="scanner-modal" class="modal hidden" aria-hidden="true">

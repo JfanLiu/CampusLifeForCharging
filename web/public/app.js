@@ -13,6 +13,8 @@ const state = {
   expandedStations: new Set(),
   message: null,
   payment: null,
+  mobileLayout: false,
+  mobileTab: 'welcome',
   scanner: {
     active: false,
     detector: null,
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function captureElements() {
   Object.assign(elements, {
+    heroSection: document.getElementById('hero-section'),
     loginView: document.getElementById('login-view'),
     dashboardView: document.getElementById('dashboard-view'),
     loginForm: document.getElementById('login-form'),
@@ -74,11 +77,18 @@ function captureElements() {
     stationSummary: document.getElementById('station-summary'),
     stationSearch: document.getElementById('station-search'),
     stationGrid: document.getElementById('station-grid'),
+    refreshOverview: document.getElementById('refresh-overview'),
     refreshStations: document.getElementById('refresh-stations'),
     expandStations: document.getElementById('expand-stations'),
     collapseStations: document.getElementById('collapse-stations'),
     messageRaw: document.getElementById('message-raw'),
-    logoutButton: document.getElementById('logout-button'),
+    logoutButtons: document.querySelectorAll('[data-logout-trigger]'),
+    mobileJumpButtons: document.querySelectorAll('[data-mobile-nav-jump]'),
+    mobileGuestNav: document.getElementById('mobile-guest-nav'),
+    mobileAuthNav: document.getElementById('mobile-auth-nav'),
+    mobileNavButtons: document.querySelectorAll('[data-mobile-nav]'),
+    mobilePanels: document.querySelectorAll('[data-mobile-panel]'),
+    mobilePanelGroups: document.querySelectorAll('#dashboard-view > .grid-two'),
     scannerModal: document.getElementById('scanner-modal'),
     scannerClose: document.getElementById('scanner-close'),
     scannerVideo: document.getElementById('scanner-video'),
@@ -101,6 +111,7 @@ function bindEvents() {
   elements.fetchJacount.addEventListener('click', () => loadJacount(true));
   elements.fetchChargeList.addEventListener('click', () => loadChargeList(true));
   elements.fetchMessage.addEventListener('click', () => loadMessage(true));
+  elements.refreshOverview.addEventListener('click', refreshOverview);
   elements.refreshStations.addEventListener('click', () => loadStations(true));
   elements.expandStations.addEventListener('click', expandAllStations);
   elements.collapseStations.addEventListener('click', collapseAllStations);
@@ -109,7 +120,23 @@ function bindEvents() {
     renderStations();
   });
   elements.stationGrid.addEventListener('click', handleStationGridClick);
-  elements.logoutButton.addEventListener('click', handleLogout);
+  elements.logoutButtons.forEach((button) => {
+    button.addEventListener('click', handleLogout);
+  });
+  elements.mobileNavButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      setMobileTab(button.dataset.mobileNav, {
+        targetId: button.dataset.mobileNavTarget,
+      });
+    });
+  });
+  elements.mobileJumpButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      setMobileTab(button.dataset.mobileNavJump, {
+        targetId: button.dataset.mobileNavTarget,
+      });
+    });
+  });
   elements.scannerClose.addEventListener('click', closeScanner);
   elements.scannerModal.addEventListener('click', (event) => {
     if (event.target === elements.scannerModal) {
@@ -136,9 +163,13 @@ function bindEvents() {
       closeScanner();
     }
   });
+  document.addEventListener('click', handleInternalSectionJump);
+  window.addEventListener('resize', syncMobileLayout);
 }
 
 async function initializeApp() {
+  syncMobileLayout();
+  syncMobileTabFromHash();
   elements.recordsYear.value = state.recordMonth.yy;
   elements.recordsMonth.value = state.recordMonth.mm;
   syncStationFilterButtons();
@@ -187,6 +218,7 @@ async function handleLoginSubmit(event) {
       body: JSON.stringify({ username, password }),
     });
     state.session = session;
+    state.mobileTab = 'overview';
     elements.loginPassword.value = '';
     showToast('登录成功');
     await loadBootstrap();
@@ -222,9 +254,23 @@ async function handleLogout() {
   state.chargeList = null;
   state.message = null;
   state.payment = null;
+  state.mobileTab = 'login';
   closeScanner();
   render();
+  scrollToSection('login-view');
   showToast('已退出登录');
+}
+
+async function refreshOverview() {
+  setButtonBusy(elements.refreshOverview, true, '更新中...');
+  try {
+    await loadBootstrap();
+    showToast('总览已刷新');
+  } catch (error) {
+    showToast(error.message || '总览刷新失败', true);
+  } finally {
+    setButtonBusy(elements.refreshOverview, false, '刷新总览');
+  }
 }
 
 async function loadAccount(withToast = false) {
@@ -588,14 +634,165 @@ function syncStationFilterButtons() {
   });
 }
 
+function handleInternalSectionJump(event) {
+  const anchor = event.target.closest('a[href^="#"]');
+  if (!anchor || !state.mobileLayout) {
+    return;
+  }
+
+  const targetId = anchor.getAttribute('href').slice(1);
+  const target = targetId ? document.getElementById(targetId) : null;
+  const panel = target?.closest('[data-mobile-panel]');
+  if (!target || !panel?.dataset.mobilePanel) {
+    return;
+  }
+
+  event.preventDefault();
+  setMobileTab(panel.dataset.mobilePanel, { targetId });
+}
+
+function syncMobileLayout() {
+  state.mobileLayout = window.innerWidth <= 720;
+  document.body.classList.toggle('mobile-nav-mode', state.mobileLayout);
+  syncMobileNavigation();
+}
+
+function syncMobileTabFromHash() {
+  const targetId = window.location.hash.replace(/^#/u, '');
+  if (!targetId) {
+    return;
+  }
+
+  const target = document.getElementById(targetId);
+  const panel = target?.closest('[data-mobile-panel]');
+  if (panel?.dataset.mobilePanel) {
+    state.mobileTab = panel.dataset.mobilePanel;
+  }
+}
+
+function ensureMobileTab() {
+  const availableTabs = state.session
+    ? ['overview', 'charge', 'records', 'stations', 'more']
+    : ['welcome', 'login', 'stations'];
+
+  if (!availableTabs.includes(state.mobileTab)) {
+    state.mobileTab = state.session ? 'overview' : 'welcome';
+  }
+}
+
+function syncMobileNavigation() {
+  ensureMobileTab();
+
+  const loggedIn = Boolean(state.session);
+  const activeTab = state.mobileTab;
+
+  elements.mobileGuestNav.classList.toggle('hidden', !state.mobileLayout || loggedIn);
+  elements.mobileAuthNav.classList.toggle('hidden', !state.mobileLayout || !loggedIn);
+
+  elements.mobilePanels.forEach((panel) => {
+    panel.classList.toggle(
+      'mobile-panel-hidden',
+      state.mobileLayout && panel.dataset.mobilePanel !== activeTab,
+    );
+  });
+
+  elements.mobilePanelGroups.forEach((group) => {
+    const hasVisibleChild = Array.from(group.children).some(
+      (child) =>
+        !child.classList.contains('hidden') && !child.classList.contains('mobile-panel-hidden'),
+    );
+    group.classList.toggle('mobile-group-hidden', state.mobileLayout && !hasVisibleChild);
+  });
+
+  const hasVisibleDashboardChild = Array.from(elements.dashboardView.children).some(
+    (child) =>
+      !child.classList.contains('hidden') &&
+      !child.classList.contains('mobile-panel-hidden') &&
+      !child.classList.contains('mobile-group-hidden'),
+  );
+  elements.dashboardView.classList.toggle(
+    'mobile-dashboard-hidden',
+    state.mobileLayout && loggedIn && !hasVisibleDashboardChild,
+  );
+
+  elements.mobileNavButtons.forEach((button) => {
+    const navName = button.dataset.mobileNav;
+    const navRoot = button.closest('.mobile-nav');
+    const isActiveNav =
+      (loggedIn && navRoot === elements.mobileAuthNav) ||
+      (!loggedIn && navRoot === elements.mobileGuestNav);
+    const active = isActiveNav && navName === activeTab;
+
+    button.classList.toggle('mobile-nav-item-active', active);
+    button.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+}
+
+function setMobileTab(tab, options = {}) {
+  if (!tab) {
+    return;
+  }
+
+  state.mobileTab = tab;
+  syncMobileNavigation();
+
+  if (options.scroll === false) {
+    return;
+  }
+
+  scrollToSection(options.targetId || getDefaultMobileTarget(tab));
+}
+
+function getDefaultMobileTarget(tab) {
+  switch (tab) {
+    case 'login':
+      return 'login-view';
+    case 'overview':
+      return 'dashboard-view';
+    case 'charge':
+      return 'charge-section';
+    case 'records':
+      return 'records-section';
+    case 'stations':
+      return 'stations-section';
+    case 'more':
+      return 'tools-section';
+    case 'welcome':
+    default:
+      return 'hero-section';
+  }
+}
+
+function scrollToSection(targetId) {
+  if (!targetId) {
+    return;
+  }
+
+  const target = document.getElementById(targetId);
+  if (!target) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  });
+}
+
 function render() {
   const loggedIn = Boolean(state.session);
+  elements.heroSection.classList.toggle('hidden', loggedIn);
   elements.loginView.classList.toggle('hidden', loggedIn);
   elements.dashboardView.classList.toggle('hidden', !loggedIn);
+  syncMobileNavigation();
   renderStations();
 
   if (!loggedIn) {
-    elements.loginUsername.focus();
+    if (!state.mobileLayout || state.mobileTab === 'login') {
+      elements.loginUsername.focus();
+    }
     return;
   }
 
@@ -1089,6 +1286,7 @@ async function api(path, options = {}) {
 
   if (response.status === 401) {
     state.session = null;
+    state.mobileTab = 'login';
     render();
   }
 
